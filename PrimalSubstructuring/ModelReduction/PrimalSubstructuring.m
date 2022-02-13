@@ -1,4 +1,4 @@
-classdef Substructuring < handle
+classdef PrimalSubstructuring < handle
     properties
         Substructures    % Array of Assembly class objects: these are the substructures
                          % The first substructure in the array is the
@@ -12,7 +12,6 @@ classdef Substructuring < handle
         
         nDOFglobal       %global number of DOFs
         globalFreeDOFs   %global free DOFs
-        B                %sparse global boundary matrix
         DirichletDOFs = []%two column vector first global DOF second dirichlet value
         
         Us = {}          %cell array with global DOF indices vectors of the substructures
@@ -23,7 +22,7 @@ classdef Substructuring < handle
     end
     
     methods
-        function self = Substructuring(Substructures)
+        function self = PrimalSubstructuring(Substructures)
            self.Substructures = Substructures;
            self.nSubs = self.nSubs();
         end 
@@ -178,6 +177,7 @@ classdef Substructuring < handle
                 end
 
                  Ls = self.L{iSub};
+                 
 
                  [Ks,~]=self.Substructures(iSub).tangent_stiffness_and_force(u0);
 
@@ -198,31 +198,6 @@ classdef Substructuring < handle
             end
         end
         
-        function transform_BC(self)
-        % rearrange all dirichlet BC from the Assemblies in global
-        % Dirichlet BC and compute the global_FreeDOFs and the boolean
-        % matrix B which is used to uncostrain vectors (same principle as
-        % for the normal assembly but now on a global level)
-            for iSub = 1:self.nSubs
-             
-                 iUs = self.Us{iSub};
-                 
-                 %check each substructure if there are Dirichlet BCs and
-                 %add them to the global DirichletDOFs
-                 if ~isempty(self.Substructures(iSub).Mesh.BC.Dirichlet)
-                     DirichletDOFsLocal = self.Substructures(iSub).Mesh.BC.Dirichlet;
-                     DirichletLocal = [iUs(DirichletDOFsLocal(:,1)) DirichletDOFsLocal(:,2)];
-                     self.DirichletDOFs = [self.DirichletDOFs; DirichletLocal];
-                 end
-            end
-            
-            self.globalFreeDOFs = setdiff(1 : self.nDOFglobal, self.DirichletDOFs);
-            
-            % update the boolean matrix
-            nf = length(self.globalFreeDOFs);
-            self.B = sparse(self.globalFreeDOFs,1:nf,true,self.nDOFglobal,nf);
-            
-        end
         
         function Mc = constrain_matrix(self,Matrix)
             
@@ -237,10 +212,30 @@ classdef Substructuring < handle
         end
         
         function v = unconstrain_vector(self,vc)
-            v = self.B * vc;
+            v = null(self.L) * vc;
             v(self.DirichletDOFs(:,1),:) = repmat(self.DirichletDOFs(:,2),1,size(vc,2));
         end
         
+        function fg = ps_force(self,Fext) %where Fext is a cell of the external forces applied on each substuctures
+           fg = [];
+           for iSub = 1:self.nSubs 
+               Ls = self.L{iSub};
+               
+               if isempty(fg)
+                   fg = Ls'*Fext{iSub};
+               else
+                   fg = fg + Ls'*Fext{iSub};
+               end
+           end
+            
+        end
         
-   end
+        function u = static_resolution(self,x,Fext)
+            self.localization_matrix()
+            [M,K] = self.global_mass_stiffness(x);
+            fg = self.ps_force(Fext); 
+            u = (M+K)\fg;
+        end
+    end
+
 end

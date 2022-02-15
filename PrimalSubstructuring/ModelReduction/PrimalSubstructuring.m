@@ -216,8 +216,10 @@ classdef PrimalSubstructuring < handle
             v(self.DirichletDOFs(:,1),:) = repmat(self.DirichletDOFs(:,2),1,size(vc,2));
         end
         
-        function fg = ps_force(self,Fext) %where Fext is a cell of the external forces applied on each substuctures
-           fg = [];
+        function fg = ps_force(self,Fext) %where Fext is a cell of the
+                                          %external forces applied on each
+           fg = [];                       %substuctures
+           
            for iSub = 1:self.nSubs 
                Ls = self.L{iSub};
                
@@ -230,12 +232,43 @@ classdef PrimalSubstructuring < handle
             
         end
         
-        function u = static_resolution(self,x,Fext)
+        function u = global_static_resolution(self,x,Fext)
             self.localization_matrix()
             [M,K] = self.global_mass_stiffness(x);
             fg = self.ps_force(Fext); 
             u = (M+K)\fg;
         end
+        
+        function u = local_static_resolution(self,x,Fext)
+            self.localization_matrix()
+            
+            u = [];
+            
+            for iSub=1:self.nSubs
+                if isempty(x)
+                    u0 = zeros(length(self.Us{iSub}),1);
+                else
+                    u0 = x{iSub};
+                end
+                    
+                [Ks,~]=self.Substructures(iSub).tangent_stiffness_and_force(u0);
+
+                 Ms = self.Substructures(iSub).mass_matrix(u0);
+                 
+                 us{iSub} = (Ms+Ks)\Fext{iSub};
+                 
+                 Ls = self.L{iSub};
+                 
+                 if isempty(u)
+                     u = Ls'*us;
+                 else
+                     u = u + Ls'*us;
+                 end
+            end    
+        end
+        
+        
     end
+    
 
 end

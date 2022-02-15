@@ -128,11 +128,15 @@ nodes2 = Assembly2.Mesh.Nodes;      % update nodes of ss#2
 % Some arbitrary external forces, fextN corresponding to the external force
 % applied on SubN
 fext1 = zeros(417,1);
-fext1(1:50) = 50*ones(50,1);
+fext1(1:50) = 0.005*ones(50,1);
 
 fext2 = zeros(573,1);
 
 Fext = {fext1,fext2};
 
-% Test of the static_resolution method
-u = PrimalSub.static_resolution([],Fext);
+% Test of the static_resolution method by comparing the global resolution
+% with the substuctured one
+
+u = PrimalSub.global_static_resolution([],Fext);
+
+v = PrimalSub.local_static_resolution([],Fext);

@@ -181,7 +181,7 @@ classdef PrimalSubstructuring < handle
 
                  [Ks,~]=self.Substructures(iSub).tangent_stiffness_and_force(u0);
 
-                 Ms = self.Substructures(iSub).mass_matrix(u0);
+                 Ms = self.Substructures(iSub).mass_matrix();
                 
                  %With the localization matrix we can compute the global
                  %matrices
@@ -253,16 +253,16 @@ classdef PrimalSubstructuring < handle
                     
                 [Ks,~]=self.Substructures(iSub).tangent_stiffness_and_force(u0);
 
-                 Ms = self.Substructures(iSub).mass_matrix(u0);
+                 Ms = self.Substructures(iSub).mass_matrix();
                  
                  us{iSub} = (Ms+Ks)\Fext{iSub};
                  
                  Ls = self.L{iSub};
                  
                  if isempty(u)
-                     u = Ls'*us;
+                     u = Ls'*us{iSub};
                  else
-                     u = u + Ls'*us;
+                     u = u + Ls'*us{iSub};
                  end
             end    
         end

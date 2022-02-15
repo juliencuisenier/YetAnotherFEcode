@@ -9,19 +9,17 @@ clc
 elementType = 'TET10';
 
 % PREPARE MODEL
-% DATA ____________________________________________________________________
+% MATERIAL ____________________________________________________________________
 E       = 70e9;     % Young's modulus [Pa]
 rho     = 2700;     % density [kg/m^3]
 nu      = 0.33;     % Poisson's ratio 
-myMaterial = KirchoffMaterial(E,rho,nu);
+
+myMaterial = KirchoffMaterial();
+set(myMaterial,'YOUNGS_MODULUS',E,'DENSITY',rho,'POISSONS_RATIO',nu);
 
 % Element
-switch elementType
-    case 'HEX20'
-        myelement = Hex20DefectsElement(myMaterial);
-    case 'TET10'
-        myelement = Tet10DefectsElement(myMaterial);
-end
+
+myElementConstructor = @()Tet10Element(myMaterial);
 
 % MESH_1:__________________________________________________________________
 l1 = 0.2;
@@ -32,20 +30,18 @@ ny1 = 1;
 nz1 = 1;
 [nodes1, elements1, nset1] = ...
     mesh_3Dparallelepiped(elementType, l1, w1, t1, nx1, ny1, nz1);
-nDOFperNode = 3;
-myMesh1 = Mesh(nodes1, elements1);
-myMesh1.set_nDOFPerNode(nDOFperNode);
-myMesh1.ElementsTable = create_elements_table(elements1, myelement);
+
+myMesh1 = Mesh(nodes1);
+myMesh1.create_elements_table(elements1, myElementConstructor);
 
 % MESH > boundary conditions
-myMesh1.BC.set_dirichlet_dofs(nset1{1}, 1:3, 0)
+%myMesh1.BC.set_dirichlet_dofs(nset1{1}, 1:3, 0)
+myMesh1.set_essential_boundary_condition(nset1{1},1:3,0)
 
 figure
 hold on
 PlotMesh(nodes1, elements1, 0);
-nodeplot(nodes1, nset1{1}, 'r') % BCs
-nodeplot(nodes1, nset1{4}, 'c') % Interface
-legend('Mesh SS#1', 'BCs', 'Interface')
+legend('Mesh SS#1')
 
 % MESH_2:__________________________________________________________________
 l2 = 0.3;
@@ -57,33 +53,24 @@ nz2 = 1;
 [nodes2, elements2, nset2]= ...
     mesh_3Dparallelepiped(elementType, l2, w2, t2, nx2, ny2, nz2);
 
-nDOFperNode = 3;
-myMesh2 = Mesh(nodes2, elements2);
-myMesh2.set_nDOFPerNode(nDOFperNode);
-myMesh2.ElementsTable = create_elements_table(elements2, myelement);
+
+myMesh2 = Mesh(nodes2);
+myMesh2.create_elements_table(elements2, myElementConstructor);
 
 % MESH > boundary conditions
-myMesh2.BC.set_dirichlet_dofs(nset2{4}, 1:3, 0)
+%myMesh2.BC.set_dirichlet_dofs(nset2{4}, 1:3, 0)
+myMesh2.set_essential_boundary_condition(nset2{4},1:3,0)
 
 figure
 hold on
 PlotMesh(nodes2 ,elements2, 0);
-nodeplot(nodes2, nset2{4}, 'r') % BCs
-nodeplot(nodes2, nset2{1}, 'c') % Interface
-legend('Mesh SS#2', 'BCs', 'Interface')
+legend('Mesh SS#2')
 
 
 % ASSEMBLY ________________________________________________________________
-% ReducedAssembly is a subclass of Assembly. It adds methods for the
-% computation of reduced internal forces, tangent stiffness matrix,
-% stiffness tensors (for nominal and defected structures) and to project
-% matrices and vectors in general using the basis V (new property of the
-% class). Additionally, the new property "U" can be used to add a basis of
-% defects to the structure.
-% [Notice that ReducedAssembly inherits all properties and methods of the
-% standard Assembly class]
-Assembly1 = ReducedAssembly(myMesh1);
-Assembly2 = ReducedAssembly(myMesh2);
+
+Assembly1 = Assembly(myMesh1);
+Assembly2 = Assembly(myMesh2);
 
 
 %% SUBSTRUCTURING                                                   
@@ -119,8 +106,8 @@ create_Interface(PrimalSub, NrSub1, NrSub2, Inodes1, Inodes2, ...
 % compatible. The shift of the coordinates is needed only for plotting
 % reasons. The fields "DualSub.Substructures(s).Mesh.Nodes" are updated
 % accordingly.
-transform_substructures(PrimalSub);
-nodes2 = Assembly2.Mesh.Nodes;      % update nodes of ss#2
+% transform_substructures(PrimalSub);
+% nodes2 = Assembly2.Mesh.Nodes;      % update nodes of ss#2
 
 
 % Test of the static resolution ___________________________________________

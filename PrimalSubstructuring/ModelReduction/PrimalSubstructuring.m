@@ -12,6 +12,7 @@ classdef PrimalSubstructuring < handle
         
         nDOFglobal       %global number of DOFs
         globalFreeDOFs   %global free DOFs
+        B                %sparse global boundary matrix
         DirichletDOFs = []%two column vector first global DOF second dirichlet value
         
         Us = {}          %cell array with global DOF indices vectors of the substructures
@@ -160,6 +161,33 @@ classdef PrimalSubstructuring < handle
             nDOFglobal = max(self.Us{self.nSubs});
         end 
         
+        
+        function compute_Dirichlet_and_global_DOFs(self)
+        % rearrange all dirichlet BC from the Assemblies in global
+        % Dirichlet BC and compute the global_FreeDOFs and the boolean
+        % matrix B which is used to uncostrain vectors (same principle as
+        % for the normal assembly but now on a global level)
+            for iSub = 1:self.nSubs
+             
+                 iUs = self.Us{iSub};
+                 
+                 %check each substructure if there are Dirichlet BCs and
+                 %add them to the global DirichletDOFs
+                 if ~isempty(self.Substructures(iSub).Mesh.EBC.constrainedDOFs)
+                     DirichletDOFsLocal = self.Substructures(iSub).Mesh.EBC.constrainedDOFs;
+                     DirichletLocal = [iUs(DirichletDOFsLocal(:,1)) DirichletDOFsLocal(:,2)];
+                     self.DirichletDOFs = [self.DirichletDOFs; DirichletLocal];
+                 end
+            end
+            
+            self.globalFreeDOFs = setdiff(1 : self.nDOFglobal, self.DirichletDOFs);
+            
+            % update the boolean matrix
+            nf = length(self.globalFreeDOFs);
+            self.B = sparse(self.globalFreeDOFs,1:nf,true,self.nDOFglobal,nf);
+            
+        end
+        
         function [M,K] = global_mass_stiffness(self,x)
             %Global_Mass_Stiffness matrix
             %Computes the global mass and stiffness matrix of all
@@ -212,7 +240,7 @@ classdef PrimalSubstructuring < handle
         end
         
         function v = unconstrain_vector(self,vc)
-            v = null(self.L) * vc;
+            v = self.B * vc;
             v(self.DirichletDOFs(:,1),:) = repmat(self.DirichletDOFs(:,2),1,size(vc,2));
         end
         

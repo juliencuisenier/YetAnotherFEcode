@@ -85,7 +85,6 @@ classdef PrimalSubstructuring < handle
         
         function compute_internal_freeDOF(self)
             self.InternalFreeDOF = cell(1,self.nSubs);
-            %self.IB = cell(1,self.nSubs);
             for i = 1:self.nSubs
                 self.InternalFreeDOF{i} = ...
                     setdiff((1 : self.Substructures(i).Mesh.nDOFs)', self.InterfaceDOF{i});
@@ -93,11 +92,7 @@ classdef PrimalSubstructuring < handle
                 if ~isempty(self.Substructures(i).Mesh.BC.Dirichlet)
                     self.InternalFreeDOF{i} = ...
                         setdiff(self.InternalFreeDOF{i}, self.Substructures(i).Mesh.BC.Dirichlet(:,1));
-                end
-%                  % update the boolean matrix
-%                 nf = length(self.InternalFreeDOF{i});
-%                 self.IB{i} = ...
-%                     sparse(self.InternalFreeDOF{i},1:nf,true,self.Substructures(i).Mesh.nDOFs,nf);
+                end                  
             end
             
             

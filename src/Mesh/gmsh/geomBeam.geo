@@ -105,3 +105,5 @@ Physical Surface("Beam2", 24) = {2, 10, 11, 3, 1, 4};
 Physical Volume("Beam1", 25) = {2};
 //+
 Physical Volume("Beam2", 26) = {1};
+//+
+Recombine Surface {11, 2, 1, 8, 7, 5, 10, 6, 9};

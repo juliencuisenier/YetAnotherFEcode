@@ -1,12 +1,12 @@
-function [Submeshes,Subelem] = Submeshing(Mesh,nSubs)
+function [Submeshes] = Submeshing(Mesh,nSubs)
 
 %Give as an output a cell containing Mesh structs of the substructures
 
 Submeshes = {};
 
-Subelem = {};
 
 for iSub=1:nSubs
+    
     
     iElements = [];
 
@@ -16,17 +16,24 @@ for iSub=1:nSubs
                 ||(Mesh.ELE_TAGS(iElm,1)==(20+iSub+4)) %Seeking if the j-th 
             %element belongs to the i-th substructure
             
-            iElements = [iElements ; nonzeros(Mesh.ELE_NODES(iElm,:))];
+            %Taking the element
+            iElements = [iElements ; Mesh.ELE_NODES(iElm,:)];
+           
             
         end
-
-        iElements = unique(iElements); %Getting away of redunctant indices
         
-        iNodes = Mesh.POS(iElements,:);
+        %Taking the nodes indices which belong to the iSub substructure
+        iIndices = unique(nonzeros(iElements));
+        
+        iNodes = Mesh.POS(iIndices,:);
     
     end
     
-    Submeshes{iSub} = iNodes;
+    Submeshes{iSub,1} = iNodes;
+    
+    Submeshes{iSub,2} = iElements;
+    
+    Submeshes{iSub,3} = [iIndices];
 
 end
 

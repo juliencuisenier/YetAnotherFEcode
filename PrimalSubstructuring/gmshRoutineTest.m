@@ -26,9 +26,11 @@ myElementConstructor = @()Tet10Element(myMaterial);
 
 TotalMesh = load_gmsh2("GeomBeam.msh", 11); %reading the .msh file
 
-[Submeshes] = Submeshing(TotalMesh,2);
+[Substructures] = Submeshing(TotalMesh,2);
 
+Substructures = reindexing_elements_from_global(Substructures);
 
+Substructures = find_nsets(Substructures);
 
 % ASSEMBLY ________________________________________________________________
 

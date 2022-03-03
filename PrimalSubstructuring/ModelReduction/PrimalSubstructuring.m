@@ -257,38 +257,13 @@ classdef PrimalSubstructuring < handle
         
         function u = global_static_resolution(self,x,Fext)
             self.localization_matrix()
-            [M,K] = self.global_mass_stiffness(x);
+            [~,K] = self.global_mass_stiffness(x);
             fg = self.ps_force(Fext); 
-            u = (M+K)\fg;
+            u = K\fg;
         end
         
-        function u = local_static_resolution(self,x,Fext)
-            self.localization_matrix()
-            
-            u = [];
-            
-            for iSub=1:self.nSubs
-                if isempty(x)
-                    u0 = zeros(length(self.Us{iSub}),1);
-                else
-                    u0 = x{iSub};
-                end
-                    
-                [Ks,~]=self.Substructures(iSub).tangent_stiffness_and_force(u0);
-
-                 Ms = self.Substructures(iSub).mass_matrix();
-                 
-                 us{iSub} = (Ms+Ks)\Fext{iSub};
-                 
-                 Ls = self.L{iSub};
-                 
-                 if isempty(u)
-                     u = Ls'*us{iSub};
-                 else
-                     u = u + Ls'*us{iSub};
-                 end
-            end    
-        end
+       
+       
         
         
     end

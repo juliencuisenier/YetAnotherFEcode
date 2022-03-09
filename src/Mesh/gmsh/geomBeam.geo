@@ -1,4 +1,5 @@
 Mesh.MshFileVersion = 2.2;
+Mesh.SubdivisionAlgorithm = 2;
 
 // definition du pas du maillage
 h = 0.1;
@@ -17,7 +18,7 @@ Point(10) = {0, 0.5, 0.3, h};
 Point(11) = {0.2, 0.5, 0, h};
 Point(12) = {0.2, 0.5, 0.3, h};
 
-// definition des segments qui relient les points
+// Definition of the lines that connect the points
 Line(1) = {1,2};
 Line(2) = {1,5};
 Line(3) = {2,6};
@@ -39,61 +40,44 @@ Line(18) = {7,8};
 Line(19) = {3,4};
 Line(20) = {4,8};
 
-//+
-Curve Loop(1) = {2, 4, -3, -1};
-//+
+//Definition of the line loops and surfaces
+
+Line Loop(1) = {2, 4, -3, -1};
+Line Loop(2) = {5, -10, -6, -4};
+Line Loop(3) = {11, -12, -9, 10};
+Line Loop(4) = {7, -12, -8, -1};
+Line Loop(5) = {15, 19, 13, 12};
+Line Loop(6) = {20, -18, 17, 19};
+Line Loop(7) = {16, 18, -14, 10};
+Line Loop(8) = {16, 17, -15, -11};
+Line Loop(9) = {9, -13, 20, -14};
+Line Loop(10) = {8, -9, -6, -3};
+Line Loop(11) = {5, 11, -7, 2};
+
+
 Surface(1) = {1};
-//+
-Curve Loop(2) = {5, -10, -6, -4};
-//+
 Surface(2) = {2};
-//+
-Curve Loop(3) = {11, -12, -9, 10};
-//+
 Surface(3) = {3};
-//+
-Curve Loop(4) = {7, -12, -8, -1};
-//+
 Surface(4) = {4};
-//+
-Curve Loop(5) = {15, 19, 13, 12};
-//+
 Surface(5) = {5};
-//+
-Curve Loop(6) = {20, -18, 17, 19};
-//+
 Surface(6) = {6};
-//+
-Curve Loop(7) = {16, 18, -14, 10};
-//+
 Surface(7) = {7};
-//+
-Curve Loop(8) = {16, 17, -15, -11};
-//+
 Surface(8) = {8};
-//+
-Curve Loop(9) = {9, -13, 20, -14};
-//+
 Surface(9) = {9};
-//+
-Curve Loop(10) = {8, -9, -6, -3};
-//+
 Surface(10) = {10};
-//+
-Curve Loop(11) = {5, 11, -7, 2};
-//+
 Surface(11) = {11};
-//+
-Surface Loop(1) = {2, 11, 4, 10, 1, 7, 8, 6, 9, 5};
-//+
-Surface Loop(2) = {2, 11, 4, 10, 1, 3};
-//+
-Volume(1) = {2};
-//+
-Surface Loop(3) = {7, 8, 6, 9, 5, 3};
-//+
-Volume(2) = {3};
-//+
+
+
+//Definition of the volumes
+
+
+Surface Loop(1) = {2, 11, 4, 10, 1, 3};
+Surface Loop(2) = {7, 8, 6, 9, 5, 3};
+
+Volume(1) = {1};
+Volume(2) = {2};
+
+
 Physical Point("Beam1", 21) = {7, 8, 12, 4, 3, 9, 11, 10};
 //+
 Physical Point("Beam2", 22) = {12, 6, 5, 10, 9, 11, 2, 1};
@@ -105,5 +89,6 @@ Physical Surface("Beam2", 24) = {2, 10, 11, 3, 1, 4};
 Physical Volume("Beam1", 25) = {2};
 //+
 Physical Volume("Beam2", 26) = {1};
-//+
-Recombine Surface {11, 2, 1, 8, 7, 5, 10, 6, 9};
+
+
+

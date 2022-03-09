@@ -36,7 +36,7 @@ Submeshes = find_nsets(Submeshes);
 
 myMesh1 = Mesh(Submeshes{1,1});
 myMesh1.create_elements_table(Submeshes{1,2}, myElementConstructor);
-myMesh1.set_essential_boundary_condition(Submeshes{1,4}{1},1:3,0)
+myMesh1.set_essential_boundary_condition(Submeshes{1,4}{5},1:3,0)
 
 figure
 hold on
@@ -47,7 +47,7 @@ legend('Mesh SS#1')
 
 myMesh2 = Mesh(Submeshes{2,1});
 myMesh2.create_elements_table(Submeshes{2,2}, myElementConstructor);
-myMesh2.set_essential_boundary_condition(Submeshes{2,4}{1},1:3,0)
+myMesh2.set_essential_boundary_condition(Submeshes{2,4}{2},1:3,0)
 
 figure
 hold on
@@ -72,20 +72,18 @@ Assembly2 = Assembly(myMesh2);
 % uses the primal assembly model of resolution 
 PrimalSub = PrimalSubstructuring([Assembly1 Assembly2]);
 
+%Interface
 
+create_Interface(PrimalSub,Submeshes,1, 2)
  
 % Test of the static resolution ___________________________________________
 
 % Some arbitrary external forces, fextN corresponding to the external force
 % applied on SubN
 
+%u = PrimalSub.static_resolution([],Fext);
 
-% Test of the static_resolution method by comparing the global resolution
-% with the substuctured one
 
-% u = PrimalSub.global_static_resolution([],Fext);
-% 
-% v = PrimalSub.local_static_resolution([],Fext);
 
 %% VIBRATION MODES                                                  
 PrimalSub.localization_matrix()
@@ -113,12 +111,12 @@ V0s = deformation2substructs(PrimalSub,V0);   % Localize V0 to substructure s
 % PLOT of the two substructures ___________________________________________
 mod = 2;
 figure
-PlotMesh(nodes1, elements1, 0);
-PlotMesh(nodes2, elements2, 0);
+%PlotMesh(Submeshes{1,1}, Submeshes{1,2}, 0);
+%PlotMesh(Submeshes{2,1}, Submeshes{2,2}, 0);
 nodalDef1 = reshape(V0s{1}(:,mod),3,[]).';
 nodalDef2 = reshape(V0s{2}(:,mod),3,[]).';
-PlotFieldonDeformedMesh(nodes1, elements1, nodalDef1, 'factor', 0.1)
-PlotFieldonDeformedMesh(nodes2, elements2, nodalDef2, 'factor', 0.1)
+PlotFieldonDeformedMesh(Submeshes{1,1}, Submeshes{1,2}, nodalDef1, 'factor', 1)
+PlotFieldonDeformedMesh(Submeshes{2,1}, Submeshes{2,2}, nodalDef2, 'factor', 1)
 colormap jet
 title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0(mod),3) ...
     ' Hz with substructuring'])

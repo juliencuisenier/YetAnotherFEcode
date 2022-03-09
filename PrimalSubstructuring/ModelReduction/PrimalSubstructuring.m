@@ -255,7 +255,7 @@ classdef PrimalSubstructuring < handle
             
         end
         
-        function u = global_static_resolution(self,x,Fext)
+        function u = static_resolution(self,x,Fext)
             self.localization_matrix()
             [~,K] = self.global_mass_stiffness(x);
             fg = self.ps_force(Fext); 

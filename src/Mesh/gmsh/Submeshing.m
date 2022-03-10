@@ -8,9 +8,10 @@ function [Submeshes] = Submeshing(Mesh,nSubs)
 
 Submeshes = {};
 
+first_elem = find(Mesh.ELE_INFOS(:,2)==5,1); %first index of the 3D element
+%of the Mesh
 
 for iSub=1:nSubs
-    
     
     iElements = [];
 
@@ -20,7 +21,7 @@ for iSub=1:nSubs
             %element belongs to the i-th substructure
             
             %Taking the element
-            iElements = [iElements ; Mesh.ELE_NODES(iElm+1048,:)];
+            iElements = [iElements ; Mesh.ELE_NODES(iElm+first_elem-1,:)];
            
         end
         

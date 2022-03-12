@@ -38,21 +38,12 @@ myMesh1 = Mesh(Submeshes{1,1});
 myMesh1.create_elements_table(Submeshes{1,2}, myElementConstructor);
 myMesh1.set_essential_boundary_condition(Submeshes{1,4}{5},1:3,0)
 
-figure
-hold on
-PlotMesh(Submeshes{1,1}, Submeshes{1,2}, 0);
-legend('Mesh SS#1')
-
 %Mesh 2____________________________________________________________________
 
 myMesh2 = Mesh(Submeshes{2,1});
 myMesh2.create_elements_table(Submeshes{2,2}, myElementConstructor);
 myMesh2.set_essential_boundary_condition(Submeshes{2,4}{2},1:3,0)
 
-figure
-hold on
-PlotMesh(Submeshes{2,1}, Submeshes{2,2}, 0);
-legend('Mesh SS#2')
 
 % ASSEMBLY ________________________________________________________________
 % ReducedAssembly is a subclass of Assembly. It adds methods for the
@@ -76,15 +67,6 @@ PrimalSub = PrimalSubstructuring([Assembly1 Assembly2]);
 
 create_Interface(PrimalSub,Submeshes,1, 2)
  
-% Test of the static resolution ___________________________________________
-
-% Some arbitrary external forces, fextN corresponding to the external force
-% applied on SubN
-
-%u = PrimalSub.static_resolution([],Fext);
-
-
-
 %% VIBRATION MODES                                                  
 PrimalSub.localization_matrix()
 PrimalSub.compute_Dirichlet_and_global_DOFs()
@@ -100,8 +82,6 @@ n_VMs = 5; % first n_VMs modes with lowest frequency calculated
 [V0,om] = eigs(Kc, Mc, n_VMs, 'SM');
 [f0,ind] = sort(sqrt(diag(om))/2/pi);
 V0 = V0(:,ind);
-f0_full = f0;
-
 
  
 V0  = PrimalSub.unconstrain_vector(V0);
@@ -111,6 +91,7 @@ V0s = deformation2substructs(PrimalSub,V0);   % Localize V0 to substructure s
 % PLOT of the two substructures ___________________________________________
 mod = 2;
 figure
+hold on
 %PlotMesh(Submeshes{1,1}, Submeshes{1,2}, 0);
 %PlotMesh(Submeshes{2,1}, Submeshes{2,2}, 0);
 nodalDef1 = reshape(V0s{1}(:,mod),3,[]).';
@@ -120,3 +101,36 @@ PlotFieldonDeformedMesh(Submeshes{2,1}, Submeshes{2,2}, nodalDef2, 'factor', 1)
 colormap jet
 title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0(mod),3) ...
     ' Hz with substructuring'])
+
+% REFERENCE MODEL 
+
+[nodes_ref,elements_ref,nset_ref] = extract_gmsh(TotalMesh);
+
+Mesh_ref = Mesh(nodes_ref);
+Mesh_ref.create_elements_table(elements_ref, myElementConstructor)
+Mesh_ref.set_essential_boundary_condition(nset_ref{2},1:3,0)
+Mesh_ref.set_essential_boundary_condition(nset_ref{5},1:3,0)
+
+Assembly_ref = Assembly(Mesh_ref);
+
+M_ref = Assembly_ref.mass_matrix();
+u0 = zeros( Mesh_ref.nDOFs, 1);
+[K_ref,~] = Assembly_ref.tangent_stiffness_and_force(u0);
+
+Mc_ref = Assembly_ref.constrain_matrix(M_ref);
+Kc_ref = Assembly_ref.constrain_matrix(K_ref);
+
+[V0_ref,om_ref] = eigs(Kc_ref, Mc_ref, n_VMs, 'SM');
+[f0_ref,ind_ref] = sort(sqrt(diag(om))/2/pi);
+V0_ref = V0_ref(:,ind);
+f0_full = f0;
+
+V0_ref = Assembly_ref.unconstrain_vector(V0_ref);
+
+figure
+hold on
+nodalDef_ref = reshape(V0_ref(:,mod),3,[]).';
+PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_ref, 'factor', 1)
+colormap jet
+title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
+    ' Hz with global model'])

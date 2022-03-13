@@ -18,14 +18,27 @@ classdef PrimalSubstructuring < handle
         Us = {}          %cell array with global DOF indices vectors of the substructures
         L = {}           %Localization matrix
         
+        globalIndices  %array containing the indices of the global structure
+        
         DATA             %Miscellaneous user-defined data which can be stored
                          %e.g. DATA.K, DATA.M, DATA.C etc.
     end
     
     methods
-        function self = PrimalSubstructuring(Substructures)
+        function self = PrimalSubstructuring(Substructures,globalIndices)
            self.Substructures = Substructures;
            self.nSubs = self.nSubs();
+           
+           self.globalIndices = globalIndices;
+           
+           self.create_Interface()
+           
+           self.localization_matrix()
+           self.compute_Dirichlet_and_global_DOFs()
+           
+           [M,K] = self.global_mass_stiffness([]);
+           self.DATA.Mc = self.constrain_matrix(M);
+           self.DATA.Kc = self.constrain_matrix(K);
         end 
         
         function nSubs = get.nSubs(self)
@@ -180,6 +193,33 @@ classdef PrimalSubstructuring < handle
             % update the boolean matrix
             nf = length(self.globalFreeDOFs);
             self.B = sparse(self.globalFreeDOFs,1:nf,true,self.nDOFglobal,nf);
+            
+        end
+        
+        function create_Interface(self)
+            
+            Interface = intersect(self.globalIndices(:,1),...
+                self.globalIndices(:,2));
+            
+            reindexed_Interface1 = [];
+            reindexed_Interface2 = [];
+            
+            for i=1:size(Interface)
+                reindexed_Interface1 = [reindexed_Interface1; ...
+                    find(self.globalIndices(:,1)== Interface(i))];
+            end
+            
+            for i=1:size(Interface)
+                reindexed_Interface2 = [reindexed_Interface2; ...
+                    find(self.globalIndices(:,2)== Interface(i))];
+            end
+            
+            reindexed_Interface = [reindexed_Interface1 reindexed_Interface2];
+            
+            self.Interfaces = [self.Interfaces reindexed_Interface];
+            
+            self.nInt = self.nInt();
+                
             
         end
         

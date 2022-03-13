@@ -78,17 +78,9 @@ Volume(1) = {1};
 Volume(2) = {2};
 
 
-Physical Point("Beam1", 21) = {7, 8, 12, 4, 3, 9, 11, 10};
-//+
-Physical Point("Beam2", 22) = {12, 6, 5, 10, 9, 11, 2, 1};
-//+
-Physical Surface("Beam1", 23) = {7, 6, 9, 8, 5, 3};
-//+
-Physical Surface("Beam2", 24) = {2, 10, 11, 3, 1, 4};
-//+
-Physical Volume("Beam1", 25) = {2};
-//+
-Physical Volume("Beam2", 26) = {1};
+Physical Volume("Beam1", 21) = {2};
+
+Physical Volume("Beam2", 22) = {1};
 
 
 

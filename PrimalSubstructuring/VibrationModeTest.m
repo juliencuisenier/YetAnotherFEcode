@@ -24,25 +24,22 @@ myElementConstructor = @()Hex8Element(myMaterial);
 
 % SUBMESHING:__________________________________________________________________
 
-TotalMesh = load_gmsh2("GeomBeam.msh", 5); %reading the .msh file
+TotalMesh = load_gmsh2("GeomBeam.msh", -1); %reading the .msh file
 
 Submeshes = Submeshing(TotalMesh,2);
 
-Submeshes = reindexing_elements_from_global(Submeshes);
-
-Submeshes = find_nsets(Submeshes);
 
 %Mesh 1___________________________________________________________________
 
 myMesh1 = Mesh(Submeshes{1,1});
 myMesh1.create_elements_table(Submeshes{1,2}, myElementConstructor);
-myMesh1.set_essential_boundary_condition(Submeshes{1,4}{5},1:3,0)
+myMesh1.set_essential_boundary_condition(Submeshes{1,3}{5},1:3,0)
 
 %Mesh 2____________________________________________________________________
 
 myMesh2 = Mesh(Submeshes{2,1});
 myMesh2.create_elements_table(Submeshes{2,2}, myElementConstructor);
-myMesh2.set_essential_boundary_condition(Submeshes{2,4}{2},1:3,0)
+myMesh2.set_essential_boundary_condition(Submeshes{2,3}{2},1:3,0)
 
 
 % ASSEMBLY ________________________________________________________________
@@ -61,25 +58,18 @@ Assembly2 = Assembly(myMesh2);
 
 % PrimalSubstructuring is a class with the basics of the substructuring and
 % uses the primal assembly model of resolution 
-PrimalSub = PrimalSubstructuring([Assembly1 Assembly2]);
+globalIndices = [Submeshes{1,4} Submeshes{2,4}];
 
-%Interface
+PrimalSub = PrimalSubstructuring([Assembly1 Assembly2],globalIndices);
 
-create_Interface(PrimalSub,Submeshes,1, 2)
  
 %% VIBRATION MODES                                                  
-PrimalSub.localization_matrix()
-PrimalSub.compute_Dirichlet_and_global_DOFs()
-% GLOBAL Mass and Stiffness matrices ______________________________________
-% Example: M = \sum_s(Ls'*Ms*Ls)
-[M,K] = PrimalSub.global_mass_stiffness([]);  % free
-Mc = PrimalSub.constrain_matrix(M);           % constrained
-Kc = PrimalSub.constrain_matrix(K);           % constrained
+
 
 % EIGENMODES ______________________________________________________________
 n_VMs = 5; % first n_VMs modes with lowest frequency calculated 
 
-[V0,om] = eigs(Kc, Mc, n_VMs, 'SM');
+[V0,om] = eigs(PrimalSub.DATA.Kc, PrimalSub.DATA.Mc, n_VMs, 'SM');
 [f0,ind] = sort(sqrt(diag(om))/2/pi);
 V0 = V0(:,ind);
 

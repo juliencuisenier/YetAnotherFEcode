@@ -1,25 +1,17 @@
-function [Substructures] = find_nsets(Substructures)
+function [nset] = find_nsets(Nodes)
 
-%Find the nsets of each substructures in order use them in the Assembly
-%class. The nsets will be added in Substructures{iSub,4}
+%Find the nsets of the nodes array in order use them in the Assembly
+%class. 
 
-nSubs = size(Substructures,1);
-
-for iSub=1:nSubs
+nset = {};
     
-    nset_iSub = {};
-    
-    for j =1:3
+for j =1:3
         
-    nset_iSub{j} = find(Substructures{iSub,1}(:,j)==...
-        min(Substructures{iSub,1}(:,j)));
+    nset{j} = find(Nodes(:,j)==...
+        min(Nodes(:,j)));
     
-    nset_iSub{3+j} = find(Substructures{iSub,1}(:,j)==...
-        max(Substructures{iSub,1}(:,j)));
-    
-    end
-    
-    Substructures{iSub,4} = nset_iSub;
+    nset{3+j} = find(Nodes(:,j)==...
+        max(Nodes(:,j)));
     
 end
 

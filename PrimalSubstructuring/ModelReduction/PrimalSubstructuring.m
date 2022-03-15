@@ -18,6 +18,8 @@ classdef PrimalSubstructuring < handle
         Us = {}          %cell array with global DOF indices vectors of the substructures
         L = {}           %Localization matrix
         
+        Elements = {} %cell array containing the IDs of each substrcture
+        
         globalIndices  %array containing the indices of the global structure
         
         DATA             %Miscellaneous user-defined data which can be stored
@@ -31,6 +33,7 @@ classdef PrimalSubstructuring < handle
            
            self.globalIndices = globalIndices;
            
+           self.get_Elements()
            self.create_Interface()
            
            self.localization_matrix()
@@ -223,6 +226,25 @@ classdef PrimalSubstructuring < handle
             
         end
         
+        function get_Elements(self)
+            
+            for iSub=1:self.nSubs
+                
+                iElements = [];
+                
+                for j=1:self.Substructures(iSub).Mesh.nElements
+                    iElements = [iElements;...
+                        self.Substructures(iSub).Mesh.Elements(j).Object.nodeIDs];
+                end
+                
+                self.Elements{iSub} = iElements;
+                
+            end
+            
+        end
+            
+        
+        
         function [M,K] = global_mass_stiffness(self,x)
             %Global_Mass_Stiffness matrix
             %Computes the global mass and stiffness matrix of all
@@ -302,11 +324,42 @@ classdef PrimalSubstructuring < handle
             u = K\fg;
         end
         
-       
+        function V0s = vibration_mode(self,n_VMs,Mods)
+            %n_VMs the number of 
+            
+            [V0,om] = eigs(self.DATA.Kc,self.DATA.Mc, n_VMs, 'SM');
+            [f0,ind] = sort(sqrt(diag(om))/2/pi);
+            V0 = V0(:,ind);
+            
+            V0  = self.unconstrain_vector(V0);
+            V0s = {};
+            
+            for iSub=1:self.nSubs
+                V0s{iSub }= self.L{iSub}*V0;
+            end
+            
+            for iMod=Mods
+                
+                figure
+                hold on
+                
+                for jSub=1:self.nSubs
+                    
+                    nodalDef = reshape(V0s{jSub}(:,iMod),3,[]).';
+                    jMesh = self.Substructures(jSub).Mesh.nodes;
+                    jElements = self.Elements{jSub};
+                    PlotFieldonDeformedMesh(jMesh, jElements, nodalDef, 'factor', 1)
+         
+                end
+                colormap jet
+                title(['\Phi_' num2str(iMod) ' - Frequency = ' num2str(f0(iMod),3) ...
+                ' Hz with substructuring'])
+            end
        
         
         
     end
     
 
+    end
 end

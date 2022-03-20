@@ -20,7 +20,7 @@ classdef PrimalSubstructuring < handle
         
         Elements = {} %cell array containing the IDs of each substrcture
         
-        globalIndices  %array containing the indices of the global structure
+        globalIndices  %cell array containing the indices of the global structure
         
         DATA             %Miscellaneous user-defined data which can be stored
                          %e.g. DATA.K, DATA.M, DATA.C etc.
@@ -184,7 +184,7 @@ classdef PrimalSubstructuring < handle
                  
                  %check each substructure if there are Dirichlet BCs and
                  %add them to the global DirichletDOFs
-                 if ~isempty(self.Substructures(iSub).Mesh.EBC.constrainedDOFs)
+                 if ~isempty(self.Substructures(iSub).Mesh.EBC)
                      DirichletDOFsLocal = self.Substructures(iSub).Mesh.EBC.constrainedDOFs;
                      DirichletLocal = [iUs(DirichletDOFsLocal(:,1)) DirichletDOFsLocal(:,2)];
                      self.DirichletDOFs = [self.DirichletDOFs; DirichletLocal];
@@ -201,29 +201,48 @@ classdef PrimalSubstructuring < handle
         
         function create_Interface(self)
             
-            Interface = intersect(self.globalIndices(:,1),...
-                self.globalIndices(:,2));
+            Interface = [];
             
-            reindexed_Interface1 = [];
-            reindexed_Interface2 = [];
+            for iSub=1:self.nSubs
+                for jSub=iSub+1:self.nSubs
+                    
+                    LocalInterface = intersect(self.globalIndices{iSub},...
+                        self.globalIndices{jSub});
+                    
+                    if ~isempty(LocalInterface)
+                        
+                        nIntLocal = length(LocalInterface);
+                        
+                        reindexed_Interface1 = [];
+                        reindexed_Interface2 = [];
             
-            for i=1:size(Interface)
-                reindexed_Interface1 = [reindexed_Interface1; ...
-                    find(self.globalIndices(:,1)== Interface(i))];
+                        for i=1:nIntLocal
+                            reindexed_Interface1 = [reindexed_Interface1; ...
+                                find(self.globalIndices{iSub}== LocalInterface(i))];
+                    
+                            reindexed_Interface2 = [reindexed_Interface2; ...
+                                find(self.globalIndices{jSub}== LocalInterface(i))];
+                        end
+                        
+                        
+                        if isempty(Interface)
+                            Interface = zeros(nIntLocal,self.nSubs);
+                            Interface(:,iSub) = reindexed_Interface1;
+                            Interface(:,jSub) = reindexed_Interface2;
+                        
+                        
+                        else
+                            nIntTotal = size(Interface,1);
+                            Interface = [Interface; zeros(nIntLocal,self.nSubs)];
+                            Interface(nIntTotal+1:nIntTotal+nIntLocal,iSub) = reindexed_Interface1;
+                            Interface(nIntTotal+1:nIntTotal+nIntLocal,jSub) = reindexed_Interface2;
+                        end
+                    end
+                end
+                        
             end
-            
-            for i=1:size(Interface)
-                reindexed_Interface2 = [reindexed_Interface2; ...
-                    find(self.globalIndices(:,2)== Interface(i))];
-            end
-            
-            reindexed_Interface = [reindexed_Interface1 reindexed_Interface2];
-            
-            self.Interfaces = [self.Interfaces reindexed_Interface];
-            
-            self.nInt = self.nInt();
-                
-            
+            self.Interfaces = Interface;
+            self.nInt = self.nInt();                   
         end
         
         function get_Elements(self)

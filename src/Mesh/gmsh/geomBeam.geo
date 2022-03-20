@@ -1,8 +1,9 @@
 Mesh.MshFileVersion = 2.2;
 Mesh.SubdivisionAlgorithm = 2;
-
+//Mesh.SecondOrderIncomplete = 1;
+Mesh.ElementOrder=2;
 // definition du pas du maillage
-h = 0.3;
+h = 2;
 
 // definition des points (en 3D, raison pour laquelle il y a un 0 en z)
 Point(1) = {0, 0, 0, h};

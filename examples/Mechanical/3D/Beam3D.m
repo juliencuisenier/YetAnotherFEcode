@@ -1,5 +1,5 @@
 % EXAMPLE: beam meshed with 3D elements
-clear;
+%clear;
 close all;
 clc
 
@@ -99,7 +99,7 @@ drawnow
 % Define external force:
 % Body force
 Pressure = 1e8;
-F = Pressure * BeamAssembly.uniform_body_force();
+[F] = Pressure * BeamAssembly.uniform_body_force();
 
 [u_lin, u] = static_equilibrium(BeamAssembly, F, 'method', 'newton', ...
     'nsteps', 10, 'display', 'iter');

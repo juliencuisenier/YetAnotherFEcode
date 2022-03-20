@@ -6,8 +6,8 @@ clc
     
 %% MODELs (material, mesh, assemblies)                              
 
-% elementType = 'HEX20';
-elementType = 'HEX8';
+ elementType = 'HEX20';
+%elementType = 'HEX8';
 
 % PREPARE MODEL
 % MATERIAL ____________________________________________________________________
@@ -24,9 +24,9 @@ myElementConstructor = @()Hex8Element(myMaterial);
 
 % SUBMESHING:__________________________________________________________________
 
-TotalMesh = load_gmsh2("GeomBeam.msh", -1); %reading the .msh file
+TotalMesh = load_gmsh2("geomBeam - Copie.msh", -1); %reading the .msh file
 
-Submeshes = Submeshing(TotalMesh,2);
+Submeshes = Submeshing(TotalMesh);
 
 
 %Mesh 1___________________________________________________________________
@@ -65,7 +65,7 @@ PrimalSub = PrimalSubstructuring([Assembly1 Assembly2],globalIndices);
  
 %% VIBRATION MODES                                                  
 
-
+t1 = tic;
 % EIGENMODES ______________________________________________________________
 n_VMs = 5; % first n_VMs modes with lowest frequency calculated 
 
@@ -73,8 +73,11 @@ Mods = [2 4];
 
 V0s = PrimalSub.vibration_mode(n_VMs,Mods);
 
+t1f = toc(t1);
 
-REFERENCE MODEL 
+%REFERENCE MODEL 
+
+t2 = tic;
 
 mod = 2;
 
@@ -107,3 +110,5 @@ PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_ref, 'factor', 1)
 colormap jet
 title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
     ' Hz with global model'])
+
+t2f = toc(t2);

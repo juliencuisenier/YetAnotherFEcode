@@ -27,7 +27,7 @@ classdef PrimalSubstructuring < handle
     end
     
     methods
-        function self = PrimalSubstructuring(Substructures,globalIndices)
+        function self = PrimalSubstructuring(Substructures,globalIndices,u0)
            self.Substructures = Substructures;
            self.nSubs = self.nSubs();
            
@@ -39,9 +39,9 @@ classdef PrimalSubstructuring < handle
            self.localization_matrix()
            self.compute_Dirichlet_and_global_DOFs()
            
-           [M,K] = self.global_mass_stiffness([]);
+           [M,self.DATA.K] = self.global_mass_stiffness(u0);
            self.DATA.Mc = self.constrain_matrix(M);
-           self.DATA.Kc = self.constrain_matrix(K);
+           self.DATA.Kc = self.constrain_matrix(self.DATA.K);
         end 
         
         function nSubs = get.nSubs(self)
@@ -319,28 +319,13 @@ classdef PrimalSubstructuring < handle
             v = self.B * vc;
             v(self.DirichletDOFs(:,1),:) = repmat(self.DirichletDOFs(:,2),1,size(vc,2));
         end
+       
         
-        function fg = ps_force(self,Fext) %where Fext is a cell of the
-                                          %external forces applied on each
-           fg = [];                       %substuctures
-           
-           for iSub = 1:self.nSubs 
-               Ls = self.L{iSub};
-               
-               if isempty(fg)
-                   fg = Ls'*Fext{iSub};
-               else
-                   fg = fg + Ls'*Fext{iSub};
-               end
-           end
-            
-        end
-        
-        function u = static_resolution(self,x,Fext)
-            self.localization_matrix()
-            [~,K] = self.global_mass_stiffness(x);
-            fg = self.ps_force(Fext); 
-            u = K\fg;
+        function u = static_resolution(self,Fext)
+            fg = L_to_global(self,Fext);
+            fgc = self.constrain_vector(fg);
+            u = self.DATA.K\fg;
+            %u = self.unconstrain_vector(uc);
         end
         
         function V0s = vibration_mode(self,n_VMs,Mods)
@@ -351,11 +336,7 @@ classdef PrimalSubstructuring < handle
             V0 = V0(:,ind);
             
             V0  = self.unconstrain_vector(V0);
-            V0s = {};
-            
-            for iSub=1:self.nSubs
-                V0s{iSub }= self.L{iSub}*V0;
-            end
+            V0s = L_to_local(self,V0);
             
             for iMod=Mods
                 

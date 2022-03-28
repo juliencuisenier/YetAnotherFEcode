@@ -3,7 +3,7 @@
 Mesh.MshFileVersion = 2.2;
 Mesh.SubdivisionAlgorithm = 2;
 
-h=1;
+h=0.4;
 
 
 //CENTERS

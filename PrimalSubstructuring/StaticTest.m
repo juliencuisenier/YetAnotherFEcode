@@ -81,7 +81,7 @@ Assembly5 = Assembly(myMesh5);
 
 globalIndices = get_globalIndices(Submeshes);
 PrimalSub = PrimalSubstructuring([Assembly1 Assembly2...
-    Assembly3 Assembly4 Assembly5],globalIndices);
+    Assembly3 Assembly4 Assembly5],globalIndices,[]);
 
 
 %%REFERENCE MODEL__________________________________________________________
@@ -89,8 +89,30 @@ PrimalSub = PrimalSubstructuring([Assembly1 Assembly2...
 
 Mesh_ref = Mesh(nodes_ref);
 Mesh_ref.create_elements_table(elements_ref, myElementConstructor)
-Mesh_ref.set_essential_boundary_condition(nset_ref{1},1:3,0)
-Mesh_ref.set_essential_boundary_condition(nset_ref{4},1:3,0)
+
+%Boundaries conditions
+
+%At front of the heart
+x_front = find(nodes_ref(:,1)==1);
+y_bc = find(abs(nodes_ref(:,2))<=0.5);
+z_bc = find(abs(nodes_ref(:,3))<=0.5);
+
+indices_front1 = intersect(x_front,y_bc);
+indices_front = intersect(indices_front1,z_bc);
+
+Mesh_ref.set_essential_boundary_condition(indices_front,1:3,0)
+
+%At behind of the heart
+
+x_behind = find(nodes_ref(:,1)==0);
+
+indices_behind1 = intersect(x_behind,y_bc);
+indices_behind = intersect(indices_behind1,z_bc);
+
+Mesh_ref.set_essential_boundary_condition(indices_behind,1:3,0)
+
+
+%Assembly
 
 Assembly_ref = Assembly(Mesh_ref);
 
@@ -106,25 +128,45 @@ hold on
 PlotMesh(nodes_ref, elements_ref, 0);
 legend('Mesh ref')
 
-%%STATIC RESOLUTIONS_______________________________________________________
+%% STATIC RESOLUTION
 
-% %With substructuring
-% 
-% f1=zeros(myMesh1.nDOFs,1);
-% f1(18) = -100;
-% 
-% Fext = {f1,zeros(myMesh5.nDOFs,1)};
-% 
-% u = PrimalSub.static_resolution([],Fext);
-% 
-% %With global reference model
-% 
-% Fext_ref = zeros(7203,1);
-% 
-% Fext_ref(54) = -100;
-% 
-% nNodes = size(nodes_ref,1);
-% u0 = zeros( Mesh_ref.nDOFs, 1);
-% [K,~] = Assembly_ref.tangent_stiffness_and_force(u0);
-% 
-% v = K\Fext_ref;
+%With substructuring
+
+%Sub1
+f1=zeros(myMesh1.nDOFs,1);
+f1(98) = -1e-6; %Force applied on the 2nd DOF of the 33rd node
+
+%Sub2
+f2=zeros(myMesh2.nDOFs,1);
+f2(96) = 1e-6; %Force applied on the 3th DOF of the 32nd node
+
+%Sub3
+f3=zeros(myMesh3.nDOFs,1);
+f3(65) = 1e-6; %Force applied on the 2nd DOF of the 22nd node
+
+%Sub4
+f4=zeros(myMesh4.nDOFs,1);
+f4(36) = -1e-6; %Force applied on the 3rd DOF of the 12th node
+
+%Sub5
+f5=zeros(myMesh5.nDOFs,1);
+
+Fext = {f1,f2,f3,f4,f5};
+
+u = PrimalSub.static_resolution([],Fext);
+
+%With global reference model
+
+Fext_ref = zeros(Mesh_ref.nDOFs,1);
+
+Fext_ref(254) = -1e-6; %Force of Sub1
+Fext_ref(168) = 1e-6; %Force of Sub2
+Fext_ref(392) = 1e-6; %Force of Sub3
+Fext_ref(279) = -1e-6; %Force of Sub4
+
+nNodes = size(nodes_ref,1);
+u0 = zeros( Mesh_ref.nDOFs, 1);
+[K,~] = Assembly_ref.tangent_stiffness_and_force(u0);
+
+v = K\Fext_ref;
+

@@ -1,4 +1,4 @@
-function [V0s,V0s_defect] = defect_modes(PrimalSub,F,n_VMs,Mods)
+function [V0s,V0s_defect,f0] = defect_modes(PrimalSub,F,n_VMs,Mods)
 %DEFECT_MODES gives the result and the plot of the original PrimalSub modes
 %and the same for a defected PrimalSub, defect caused by the forces 'cell F 
 
@@ -7,7 +7,7 @@ function [V0s,V0s_defect] = defect_modes(PrimalSub,F,n_VMs,Mods)
 %   n_VMs : number of the first vibration mode that we want
 %   Mods : Modes that we want to plot
 
-V0s = PrimalSub.vibration_mode(n_VMs,Mods);
+[V0s,f0] = PrimalSub.vibration_mode(n_VMs,Mods);
 
 u = PrimalSub.static_resolution(F);
 

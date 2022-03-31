@@ -8,7 +8,7 @@ function [us] = L_to_local(PrimalSub,u)
 us = {};
 
 for iSub=1:PrimalSub.nSubs
-    us{iSub} =PrimalSub.L{iSub}*u;
+    us{iSub} = PrimalSub.L{iSub}*u;
 end
 
 end

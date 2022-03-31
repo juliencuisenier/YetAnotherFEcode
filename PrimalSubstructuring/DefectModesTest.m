@@ -191,19 +191,38 @@ hold on
 PlotMesh(nodes_ref, elements_ref, 0);
 legend('Mesh ref')
 
-%% VIBRATION MODES (reference model)                                                
+%% VIBRATION MODES                                                
 
 % EIGENMODES ______________________________________________________________
 n_VMs = 5; % first n_VMs modes with lowest frequency calculated 
 
-Mods = [2 4];
-
 mod = 2;
 
-M_ref = Assembly_ref.mass_matrix();
+%Substructuring
 
-Mc_ref = Assembly_ref.constrain_matrix(M_ref);
-Kc_ref = Assembly_ref.constrain_matrix(K_ref);
+[V0,om] = eigs(PrimalSub.DATA.Kc,PrimalSub.DATA.Mc, n_VMs, 'SM');
+[f0,ind] = sort(sqrt(diag(om))/2/pi);
+V0 = V0(:,ind);
+
+V0  = PrimalSub.unconstrain_vector(V0);
+V0s = L_to_local(PrimalSub,V0);
+
+figure
+hold on
+for jSub=1:PrimalSub.nSubs
+    
+    nodalDef = reshape(V0s{jSub}(:,mod),3,[]).';
+    jMesh = PrimalSub.Substructures(jSub).Mesh.nodes;
+    jElements = PrimalSub.Elements{jSub};
+    PlotFieldonDeformedMesh(jMesh, jElements, nodalDef, 'factor', 10)
+    
+end
+colormap jet
+title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0(mod),3) ...
+    ' Hz with substructuring'])
+
+
+%Global model
 
 [V0_ref,om_ref] = eigs(Kc_ref, Mc_ref, n_VMs, 'SM');
 [f0_ref,ind_ref] = sort(sqrt(diag(om_ref))/2/pi);
@@ -214,30 +233,40 @@ V0_ref = Assembly_ref.unconstrain_vector(V0_ref);
 figure
 hold on
 nodalDef_ref = reshape(V0_ref(:,mod),3,[]).';
-PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_ref, 'factor', 1)
+PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_ref, 'factor', 10)
 colormap jet
 title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
     ' Hz with global model'])
 
-%% Defining the force
+%% STATIC RESOLUTION
+
+%Defining the force________________________________________________________
 
 %With substructuring
 
 %Sub1
+loc1 = [0.5 0.15 2.5];
+DOFs = PrimalSub.Substructures(1).Mesh.get_DOF_from_location(loc1);
 f1=zeros(myMesh1.nDOFs,1);
-f1(98) = -1e-4; %Force applied on the 2nd DOF of the 33rd node
+f1(DOFs(2)) = -1e6; %Force applied on the 2nd DOF of the 33rd node
 
 %Sub2
+loc2 = [0.5 2.5 -0.15];
+DOFs = PrimalSub.Substructures(2).Mesh.get_DOF_from_location(loc2);
 f2=zeros(myMesh2.nDOFs,1);
-f2(96) = 1e-4; %Force applied on the 3th DOF of the 32nd node
+f2(DOFs(3)) = 1e6; %Force applied on the 3th DOF of the 32nd node
 
 %Sub3
+loc3 = [0.5 -0.15 -2.5];
+DOFs = PrimalSub.Substructures(3).Mesh.get_DOF_from_location(loc3);
 f3=zeros(myMesh3.nDOFs,1);
-f3(65) = 1e-4; %Force applied on the 2nd DOF of the 22nd node
+f3(DOFs(2)) = 1e6; %Force applied on the 2nd DOF of the 22nd node
 
 %Sub4
+loc4 = [0.5 -2.5 0.15];
+DOFs = PrimalSub.Substructures(4).Mesh.get_DOF_from_location(loc4);
 f4=zeros(myMesh4.nDOFs,1);
-f4(36) = -1e-4; %Force applied on the 3rd DOF of the 12th node
+f4(DOFs(3)) = -1e6; %Force applied on the 3rd DOF of the 12th node
 
 %Sub5
 f5=zeros(myMesh5.nDOFs,1);
@@ -248,24 +277,85 @@ Fext = {f1,f2,f3,f4,f5};
 
 Fext_ref = zeros(Mesh_ref.nDOFs,1);
 
-Fext_ref(254) = -1e-4; %Force of Sub1
-Fext_ref(168) = 1e-4; %Force of Sub2
-Fext_ref(392) = 1e-4; %Force of Sub3
-Fext_ref(279) = -1e-4; %Force of Sub4
+DOFs = Mesh_ref.get_DOF_from_location(loc1);
+Fext_ref(DOFs(2)) = -1e6; %Force of Sub1
+
+DOFs = Mesh_ref.get_DOF_from_location(loc2);
+Fext_ref(DOFs(3)) = 1e6; %Force of Sub2
+
+DOFs = Mesh_ref.get_DOF_from_location(loc3);
+Fext_ref(DOFs(2)) = 1e6; %Force of Sub3
+
+DOFs = Mesh_ref.get_DOF_from_location(loc4);
+Fext_ref(DOFs(3)) = -1e6; %Force of Sub4
+
+%Static resolutions________________________________________________________
+
+%Using substructuring
+u_sub = static_resolution(PrimalSub,Fext);
+
+us = L_to_local(PrimalSub,u_sub);
+
+figure
+hold on
+for jSub=1:PrimalSub.nSubs
+    
+    staticDef = reshape(us{jSub},3,[]).';
+    jMesh = PrimalSub.Substructures(jSub).Mesh.nodes;
+    jElements = PrimalSub.Elements{jSub};
+    PlotFieldonDeformedMesh(jMesh, jElements, staticDef, 'factor', 10)
+    
+end
+colormap jet
+title('Deformation of the structure using substructuring')
+
+%Using global model
+
+Fextc_ref = Assembly_ref.constrain_vector(Fext_ref);
+
+uc_ref = Kc_ref\Fextc_ref;
+
+u_ref = Assembly_ref.unconstrain_vector(uc_ref);
+
+figure
+hold on
+staticDef_ref = reshape(u_ref,3,[]).';
+PlotFieldonDeformedMesh(nodes_ref, elements_ref, staticDef_ref, 'factor', 10)
+colormap jet
+title('Deformation of the structure using global model')
 
 %% DEFECT MODES
 
-%With substructure
-[V0s,V0s_defect] = defect_modes(PrimalSub,Fext,n_VMs,Mods);
+%Using substructuring
+
+
+[~,new_K] = PrimalSub.global_mass_stiffness(us);
+new_Kc = PrimalSub.constrain_matrix(new_K);
+
+[new_V0,new_om] = eigs(new_Kc, PrimalSub.DATA.Mc, n_VMs, 'SM');
+[new_f0,new_ind] = sort(sqrt(diag(new_om))/2/pi);
+new_V0 = new_V0(:,new_ind);
+
+new_V0  = PrimalSub.unconstrain_vector(new_V0);
+new_V0s = L_to_local(PrimalSub,new_V0);
+
+figure
+hold on
+for jSub=1:PrimalSub.nSubs
+    
+    new_nodalDef = reshape(new_V0s{jSub}(:,mod),3,[]).';
+    jMesh = PrimalSub.Substructures(jSub).Mesh.nodes;
+    jElements = PrimalSub.Elements{jSub};
+    PlotFieldonDeformedMesh(jMesh, jElements, new_nodalDef, 'factor', 10)
+    
+end
+colormap jet
+title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0(mod),3) ...
+    ' Hz using substructuring with defects'])
 
 %With global model
 
-u0 = zeros( Mesh_ref.nDOFs, 1);
-[K,~] = Assembly_ref.tangent_stiffness_and_force(u0);
-
-v = K\Fext_ref;
-
-[new_K_ref,~] = Assembly_ref.tangent_stiffness_and_force(v);
+[new_K_ref,~] = Assembly_ref.tangent_stiffness_and_force(u_ref);
 
 new_Kc_ref = Assembly_ref.constrain_matrix(new_K_ref);
 
@@ -278,16 +368,33 @@ new_V0_ref = Assembly_ref.unconstrain_vector(new_V0_ref);
 figure
 hold on
 new_nodalDef_ref = reshape(new_V0_ref(:,mod),3,[]).';
-PlotFieldonDeformedMesh(nodes_ref, elements_ref, new_nodalDef_ref, 'factor', 1)
+PlotFieldonDeformedMesh(nodes_ref, elements_ref, new_nodalDef_ref, 'factor', 10)
 colormap jet
 title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(new_f0_ref(mod),3) ...
-    ' Hz with global model'])
+    ' Hz using global model with defects'])
 
 
-figure
-hold on
-new_nodalDef_ref = reshape(new_V0_ref(:,4),3,[]).';
-PlotFieldonDeformedMesh(nodes_ref, elements_ref, new_nodalDef_ref, 'factor', 1)
-colormap jet
-title(['\Phi_' num2str(4) ' - Frequency = ' num2str(new_f0_ref(4),3) ...
-    ' Hz with global model'])
+%% Differences
+
+corr_gmsh_indices = corr_gmsh_indices(PrimalSub,Mesh_ref);
+V0 = reindex_vector(corr_gmsh_indices,V0(:,2));
+u_sub = reindex_vector(corr_gmsh_indices,u_sub);
+new_V0 = reindex_vector(corr_gmsh_indices,new_V0(:,2));
+
+%Vibration modes
+V0_norm = V0/norm(V0);
+V0_ref_norm = V0_ref(:,2)/norm(V0_ref(:,2));
+
+VM_deflects_angle = acos(V0_norm'*V0_ref_norm)*180/pi;
+
+%Static deflections
+u_sub_norm = u_sub/norm(u_sub);
+u_ref_norm = u_ref/norm(u_ref);
+
+static_deflects_angle = acos(u_sub_norm'*u_ref_norm)*180/pi;
+
+%VM with defects
+new_V0_norm = new_V0/norm(new_V0);
+new_V0_ref_norm = new_V0_ref(:,2)/norm(new_V0_ref(:,2));
+
+new_VM_deflects_angle = acos(new_V0_norm'*new_V0_ref_norm)*180/pi;

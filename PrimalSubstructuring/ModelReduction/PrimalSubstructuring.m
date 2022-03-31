@@ -319,47 +319,8 @@ classdef PrimalSubstructuring < handle
             v = self.B * vc;
             v(self.DirichletDOFs(:,1),:) = repmat(self.DirichletDOFs(:,2),1,size(vc,2));
         end
-       
-        
-        function u = static_resolution(self,Fext)
-            fg = L_to_global(self,Fext);
-            fgc = self.constrain_vector(fg);
-            u = self.DATA.K\fg;
-            %u = self.unconstrain_vector(uc);
-        end
-        
-        function V0s = vibration_mode(self,n_VMs,Mods)
-            %n_VMs the number of 
-            
-            [V0,om] = eigs(self.DATA.Kc,self.DATA.Mc, n_VMs, 'SM');
-            [f0,ind] = sort(sqrt(diag(om))/2/pi);
-            V0 = V0(:,ind);
-            
-            V0  = self.unconstrain_vector(V0);
-            V0s = L_to_local(self,V0);
-            
-            for iMod=Mods
-                
-                figure
-                hold on
-                
-                for jSub=1:self.nSubs
-                    
-                    nodalDef = reshape(V0s{jSub}(:,iMod),3,[]).';
-                    jMesh = self.Substructures(jSub).Mesh.nodes;
-                    jElements = self.Elements{jSub};
-                    PlotFieldonDeformedMesh(jMesh, jElements, nodalDef, 'factor', 1)
-         
-                end
-                colormap jet
-                title(['\Phi_' num2str(iMod) ' - Frequency = ' num2str(f0(iMod),3) ...
-                ' Hz with substructuring'])
-            end
-       
         
         
     end
     
-
-    end
 end

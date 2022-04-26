@@ -12,9 +12,9 @@ function corr_gmsh_indices = corr_gmsh_indices(PrimalSub,GlobalMesh)
 % [...]                                      to the right index in the
 %                                            global gmsh mesh
 
-u = [1:PrimalSub.nDOFglobal]';
 
-us = L_to_local(PrimalSub, u);
+
+us = PrimalSub.Us;
 corr_gmsh_indices = zeros(PrimalSub.nDOFglobal,1);
 
 for iSub=1:PrimalSub.nSubs

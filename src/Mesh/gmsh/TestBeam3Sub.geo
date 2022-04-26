@@ -84,3 +84,67 @@ Plane Surface(2) = {2};
 Curve Loop(3) = {7, -5, -3, 6};
 //+
 Plane Surface(3) = {3};
+//+
+Curve Loop(4) = {14, 15, 28, 10};
+//+
+Plane Surface(4) = {4};
+//+
+Curve Loop(5) = {14, -19, -13, -2};
+//+
+Plane Surface(5) = {5};
+//+
+Curve Loop(6) = {18, 19, 15, 16};
+//+
+Plane Surface(6) = {6};
+//+
+Curve Loop(7) = {17, 11, -28, 16};
+//+
+Plane Surface(7) = {7};
+//+
+Curve Loop(8) = {27, 16, 25, 26};
+//+
+Plane Surface(8) = {8};
+//+
+Curve Loop(9) = {20, -23, 27, -15};
+//+
+Plane Surface(9) = {9};
+//+
+Curve Loop(10) = {21, 22, 19, 20};
+//+
+Plane Surface(10) = {10};
+//+
+Curve Loop(11) = {24, 26, 23, 21};
+//+
+Plane Surface(11) = {11};
+//+
+Curve Loop(12) = {6, -17, 18, -13};
+//+
+Plane Surface(12) = {12};
+//+
+Curve Loop(13) = {22, -18, 25, -24};
+//+
+Plane Surface(13) = {13};
+//+
+Surface Loop(1) = {9, 10, 11, 13, 8, 6};
+//+
+Volume(1) = {1};
+//+
+Curve Loop(14) = {10, 2, 6, 11};
+//+
+Plane Surface(14) = {14};
+//+
+Surface Loop(2) = {5, 4, 7, 12, 14, 6};
+//+
+Volume(2) = {2};
+//+
+Curve Loop(15) = {1, -10, -9, 12};
+//+
+Plane Surface(15) = {15};
+//+
+Curve Loop(16) = {8, 9, -11, 7};
+//+
+Plane Surface(16) = {16};
+//+
+Surface Loop(3) = {15, 1, 2, 3, 16, 14};
+//+
+Volume(3) = {3};

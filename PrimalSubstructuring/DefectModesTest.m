@@ -244,29 +244,31 @@ title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
 
 %With substructuring
 
+S = 1e6;
+
 %Sub1
 loc1 = [0.5 0.15 2.5];
 DOFs = PrimalSub.Substructures(1).Mesh.get_DOF_from_location(loc1);
 f1=zeros(myMesh1.nDOFs,1);
-f1(DOFs(2)) = -1e6; %Force applied on the 2nd DOF of the 33rd node
+f1(DOFs(2)) = -S; %Force applied on the 2nd DOF of the 33rd node
 
 %Sub2
 loc2 = [0.5 2.5 -0.15];
 DOFs = PrimalSub.Substructures(2).Mesh.get_DOF_from_location(loc2);
 f2=zeros(myMesh2.nDOFs,1);
-f2(DOFs(3)) = 1e6; %Force applied on the 3th DOF of the 32nd node
+f2(DOFs(3)) = S; %Force applied on the 3th DOF of the 32nd node
 
 %Sub3
 loc3 = [0.5 -0.15 -2.5];
 DOFs = PrimalSub.Substructures(3).Mesh.get_DOF_from_location(loc3);
 f3=zeros(myMesh3.nDOFs,1);
-f3(DOFs(2)) = 1e6; %Force applied on the 2nd DOF of the 22nd node
+f3(DOFs(2)) = S; %Force applied on the 2nd DOF of the 22nd node
 
 %Sub4
 loc4 = [0.5 -2.5 0.15];
 DOFs = PrimalSub.Substructures(4).Mesh.get_DOF_from_location(loc4);
 f4=zeros(myMesh4.nDOFs,1);
-f4(DOFs(3)) = -1e6; %Force applied on the 3rd DOF of the 12th node
+f4(DOFs(3)) = -S; %Force applied on the 3rd DOF of the 12th node
 
 %Sub5
 f5=zeros(myMesh5.nDOFs,1);
@@ -278,16 +280,16 @@ Fext = {f1,f2,f3,f4,f5};
 Fext_ref = zeros(Mesh_ref.nDOFs,1);
 
 DOFs = Mesh_ref.get_DOF_from_location(loc1);
-Fext_ref(DOFs(2)) = -1e6; %Force of Sub1
+Fext_ref(DOFs(2)) = -S; %Force of Sub1
 
 DOFs = Mesh_ref.get_DOF_from_location(loc2);
-Fext_ref(DOFs(3)) = 1e6; %Force of Sub2
+Fext_ref(DOFs(3)) = S; %Force of Sub2
 
 DOFs = Mesh_ref.get_DOF_from_location(loc3);
-Fext_ref(DOFs(2)) = 1e6; %Force of Sub3
+Fext_ref(DOFs(2)) = S; %Force of Sub3
 
 DOFs = Mesh_ref.get_DOF_from_location(loc4);
-Fext_ref(DOFs(3)) = -1e6; %Force of Sub4
+Fext_ref(DOFs(3)) = -S; %Force of Sub4
 
 %Static resolutions________________________________________________________
 
@@ -350,7 +352,7 @@ for jSub=1:PrimalSub.nSubs
     
 end
 colormap jet
-title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0(mod),3) ...
+title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(new_f0(mod),3) ...
     ' Hz using substructuring with defects'])
 
 %With global model

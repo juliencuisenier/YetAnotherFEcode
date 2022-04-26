@@ -38,6 +38,7 @@ classdef PrimalSubstructuring < handle
            
            self.localization_matrix()
            self.compute_Dirichlet_and_global_DOFs()
+           self.compute_internal_freeDOF()
            
            [M,self.DATA.K] = self.global_mass_stiffness(u0);
            self.DATA.Mc = self.constrain_matrix(M);
@@ -105,9 +106,9 @@ classdef PrimalSubstructuring < handle
                 self.InternalFreeDOF{i} = ...
                     setdiff((1 : self.Substructures(i).Mesh.nDOFs)', self.InterfaceDOF{i});
                 
-                if ~isempty(self.Substructures(i).Mesh.BC.Dirichlet)
+                if ~isempty(self.Substructures(i).Mesh.EBC)
                     self.InternalFreeDOF{i} = ...
-                        setdiff(self.InternalFreeDOF{i}, self.Substructures(i).Mesh.BC.Dirichlet(:,1));
+                        setdiff(self.InternalFreeDOF{i}, self.Substructures(i).Mesh.EBC.constrainedDOFs(:,1));
                 end                  
             end
             

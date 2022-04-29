@@ -8,6 +8,7 @@ end
 
 addpath(genpath(strcat(pwd,sslash,'src')));
 addpath(genpath(strcat(pwd,sslash,'external')));
+addpath(genpath(strcat(pwd,sslash,'PrimalSubstructuring')));
 addpath(genpath(strcat(pwd,sslash,'examples',sslash,'Meshes')));
 
 disp('              _____ _____     ')

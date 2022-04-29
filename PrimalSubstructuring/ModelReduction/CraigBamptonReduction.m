@@ -9,6 +9,9 @@ T_hcb = cell(1,nSubs);
 Us_hcb = cell(1,nSubs);
 L_hcb = cell(1,nSubs);
 
+Ms_rearranged = cell(1,nSubs);
+Ks_rearranged = cell(1,nSubs);
+
 ms = zeros(1,nSubs);
 
 nInternalDOFglobal_hcb = 0;
@@ -34,7 +37,7 @@ for iSub=1:nSubs
     Ms = PrimalSub.Substructures(iSub).mass_matrix();
     Ms_ii = Ms(Us_internal,Us_internal);
     
-    [V0_i,om] = eigs(Ks_ii, Ms_ii, 20, 'SM'); 
+    [V0_i,om] = eigs(Ks_ii, Ms_ii, 100, 'SM'); 
     f = sqrt(diag(om))/2/pi;
     f = nonzeros(f < freq);
     [m,~] = size(f);
@@ -44,7 +47,8 @@ for iSub=1:nSubs
     IVM = [V0_i; zeros(nInts,m)];
     
     T_hcb{iSub} = [IVM CM]; 
-    
+    Ms_rearranged{iSub} = [Ms_ii Ms(Us_internal,Us_interface); Ms(Us_interface,Us_internal) Ms(Us_interface,Us_interface)];
+    Ks_rearranged{iSub} = [Ks_ii Ks_ib; Ks(Us_interface,Us_internal) Ks(Us_interface,Us_interface)];
     ms(iSub) = m;
     
     Us_hcb{iSub} = zeros(1,m+nInts);
@@ -99,12 +103,10 @@ M_hcb = [];
 K_hcb = [];
 
 for iSub=1:nSubs
-    Ms = PrimalSub.Substructures(iSub).mass_matrix();
-    u0 = zeros(length(PrimalSub.Us{iSub}),1);
-    [Ks,~] = PrimalSub.Substructures(iSub).tangent_stiffness_and_force(u0);
+  
     
-    Mcs = PrimalSub.Substructures(iSub).constrain_matrix(Ms);
-    Kcs = PrimalSub.Substructures(iSub).constrain_matrix(Ks);
+    Mcs = Ms_rearranged{iSub};
+    Kcs = Ks_rearranged{iSub};
     
     Ms_hcb = T_hcb{iSub}'*Mcs*T_hcb{iSub};
     

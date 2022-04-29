@@ -134,3 +134,8 @@ title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
 [f0_hcb,ind] = sort(sqrt(diag(om))/2/pi);
 V0_hcb = V0_hcb(:,ind);
 
+[M_hcb,K_hcb,L_hcb] = HCBReduction(PrimalSub,[],5);
+
+[V0_hcb_bis,om] = eigs(M_hcb,M_hcb, n_VMs, 'SM');
+[f0_hcb_bis,ind] = sort(sqrt(diag(om))/2/pi);
+V0_hcb_bis = V0_hcb_bis(:,ind);

@@ -1,4 +1,4 @@
-function [M_hcb,K_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,freq)
+function [M_hcb,K_hcb,T_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,freq)
 %GREGBAMPTONREDUCTION Summary of this function goes here
 %   Detailed explanation goes here
 

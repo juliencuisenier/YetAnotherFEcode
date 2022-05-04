@@ -3,12 +3,15 @@ function [Submeshes] = Submeshing(Mesh)
 %Give as an output a cell containing Mesh structs of the substructures such
 %that : Submeshes{iSub,1} = array containing the coordinates of the nodes
 %       Submeshes{iSub,2} = elements array
-%       Submeshes{iSub,3} = array containing the original indices of the
+%       Submeshes{iSub,3} = indices of the boundaries
+%       Submeshes{iSub,4} = array containing the original indices of the
 %                           global mesh
 
-Submeshes = {};
+
 
 nSubs = max(Mesh.ELE_TAGS(:,1))-min(Mesh.ELE_TAGS(:,1))+1;
+
+Submeshes = cell(nSubs,4);
 
 min_index = min(Mesh.ELE_TAGS(:,1)) - 1;
 

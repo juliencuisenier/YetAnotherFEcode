@@ -1,23 +1,36 @@
-function [V_corr] = corr_reduction_indices(PrimalSub,V)
+function [Vs_corr] = corr_reduction_indices(PrimalSub,T_hcb,L_hcb,V_hcb)
 %CORR_REDUCTIONINDICES Summary of this function goes here
 %   Detailed explanation goes here
 
-V_corr = zeros(length(V),1);
-InternalDOFDone = 0;
+nSubs = PrimalSub.nSubs;
+Vs_corr = cell(1,nSubs);
+Vs = cell(1,nSubs);
 
-for iSub=1:PrimalSub.nSubs
-    
-    V_corr(PrimalSub.InternalFreeDOF{iSub}) = V(InternalDOFDone+1:InternalDOFDone+length(PrimalSub.InternalFreeDOF{iSub}));
-    InternalDOFDone = InternalDOFDone + length(PrimalSub.InternalFreeDOF{iSub});
-    
+for iSub=1:nSubs
+    Vs_hcb = L_hcb{iSub}*V_hcb;
+    Vs{iSub} = T_hcb{iSub}*Vs_hcb;
 end
 
-InterfaceDOFDone = 0;
-
-for iSub=1:PrimalSub.nSubs
+for iSub=1:nSubs
+   
+    InternalUs = PrimalSub.InternalFreeDOF{iSub};
+    InterfaceUs = PrimalSub.InterfaceDOF{iSub};
+    Us = PrimalSub.Us{iSub};
     
-    V_corr(PrimalSub.InterfaceDOF{iSub}) = V(InternalDOFDone+InterfaceDOFDone+1:InternalDOFDone+InterfaceDOFDone+length(PrimalSub.InterfaceDOF{iSub}));
-    InterfaceDOFDone = InterfaceDOFDone + length(PrimalSub.InterfaceDOF{iSub});
+    nDOFinterface = length(InterfaceUs);
+    nDOFinternalFree = length(InternalUs);
+    
+    
+    Vs_corr{iSub} = zeros(length(Us),1);
+    
+    
+    for i=1:nDOFinternalFree
+        Vs_corr{iSub}(InternalUs(i)) = Vs{iSub}(i);
+    end
+    
+    for i=1:nDOFinterface
+        Vs_corr{iSub}(InterfaceUs(i)) = Vs{iSub}(i+nDOFinternalFree)/2;
+    end
     
 end
 

@@ -7,7 +7,7 @@ elements = Mesh.ELE_NODES;
     
 nodes = Mesh.POS;
 
-nset = {};
+nset = cell(1,6);
 
 for i=1:3
     

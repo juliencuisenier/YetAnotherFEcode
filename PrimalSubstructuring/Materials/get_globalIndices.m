@@ -4,7 +4,7 @@ function [globalIndices] = get_globalIndices(Submeshes)
 
 nSubs = size(Submeshes,1);
 
-globalIndices = {};
+globalIndices = cell(1,nSubs);
 
 for iSub=1:nSubs
     

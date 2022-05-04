@@ -3,7 +3,7 @@ function [nset] = find_nsets(Nodes)
 %Find the nsets of the nodes array in order use them in the Assembly
 %class. 
 
-nset = {};
+nset = cell(1,6);
     
 for j =1:3
         

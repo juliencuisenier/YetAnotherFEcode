@@ -5,7 +5,7 @@ function [us] = L_to_local(PrimalSub,u)
 %   PrimalSub : PrimalSubstructure class
 %   u : a vector
 
-us = {};
+us = cell(1,PrimalSub.nSubs);
 
 for iSub=1:PrimalSub.nSubs
     us{iSub} = PrimalSub.L{iSub}*u;

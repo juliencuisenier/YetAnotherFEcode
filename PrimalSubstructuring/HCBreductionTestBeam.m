@@ -128,14 +128,43 @@ title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
 
 %% HCB Reduction method
 
-[M_hcb,K_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,10000);
+n_VMS = 5;
 
-[V0_hcb,om] = eigs(M_hcb,M_hcb, n_VMs, 'SM');
+[M_hcb,K_hcb,T_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,10000);
+
+[V0s_hcb,om] = eigs(K_hcb,M_hcb, n_VMS, 'SM');
 [f0_hcb,ind] = sort(sqrt(diag(om))/2/pi);
-V0_hcb = V0_hcb(:,ind);
+V0s_hcb = V0s_hcb(:,ind);
 
-[M_hcb,K_hcb,L_hcb] = HCBReduction(PrimalSub,[],5);
+V0s_hcb_corr = corr_reduction_indices(PrimalSub,T_hcb,L_hcb,V0s_hcb(:,2));
 
-[V0_hcb_bis,om] = eigs(M_hcb,M_hcb, n_VMs, 'SM');
-[f0_hcb_bis,ind] = sort(sqrt(diag(om))/2/pi);
-V0_hcb_bis = V0_hcb_bis(:,ind);
+
+V0_hcb = L_to_global(PrimalSub,V0s_hcb_corr);
+
+corr_gmsh_indices = corr_gmsh_indices(PrimalSub,Mesh_ref);
+V0_hcb = reindex_vector(corr_gmsh_indices,V0_hcb);
+
+figure
+hold on
+nodalDef_hcb = reshape(V0_hcb,3,[]).';
+PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_hcb, 'factor', 1)
+colormap jet
+title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_hcb(mod),3) ...
+    ' Hz with HCB reduction'])
+
+%% Differences
+
+diff_freq = abs(f0_ref-f0_hcb)./f0_ref;
+
+normV0_ref = V0_ref(:,2)/norm(V0_ref(:,2));
+
+normV0_hcb = V0_hcb/norm(V0_hcb);
+
+hcb_angle = acos(normV0_hcb'*normV0_ref)*180/pi;
+
+
+
+
+
+
+

@@ -44,7 +44,7 @@ for iSub=1:nSubs
     [~,ind] = sort(f);
     V0_i = V0_i(:,ind);
     
-    IVM = [V0_i; zeros(nInts,m)];
+    IVM = [V0_i;zeros(nInts,m)];
     
     T_hcb{iSub} = [IVM CM]; 
     Ms_rearranged{iSub} = [Ms_ii Ms(Us_internal,Us_interface); Ms(Us_interface,Us_internal) Ms(Us_interface,Us_interface)];
@@ -63,6 +63,7 @@ U = 1:nDOFglobal_hcb';
 InternalDOFdone = 0;
 InterfaceDOFdone = nInternalDOFglobal_hcb;
 IntsDOFdone = zeros(1,nSubs);
+
 
 Interfaces = PrimalSub.Interfaces;
 

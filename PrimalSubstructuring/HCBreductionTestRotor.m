@@ -60,8 +60,8 @@ myMesh5 = Mesh(Submeshes{5,1});
 myMesh5.create_elements_table(Submeshes{5,2}, myElementConstructor);
 
 x_front = find(Submeshes{5,1}(:,1)==1);
-y_bc = find(abs(Submeshes{5,1}(:,2))<=0.5);
-z_bc = find(abs(Submeshes{5,1}(:,3))<=0.5);
+y_bc = find(abs(Submeshes{5,1}(:,2))<=0.35);
+z_bc = find(abs(Submeshes{5,1}(:,3))<=0.35);
 
 indices_front1 = intersect(x_front,y_bc);
 indices_front = intersect(indices_front1,z_bc);
@@ -111,8 +111,8 @@ Mesh_ref.create_elements_table(elements_ref, myElementConstructor)
 
 %At front of the heart
 x_front = find(nodes_ref(:,1)==1);
-y_bc = find(abs(nodes_ref(:,2))<=0.5);
-z_bc = find(abs(nodes_ref(:,3))<=0.5);
+y_bc = find(abs(nodes_ref(:,2))<=0.35);
+z_bc = find(abs(nodes_ref(:,3))<=0.35);
 
 indices_front1 = intersect(x_front,y_bc);
 indices_front = intersect(indices_front1,z_bc);
@@ -194,30 +194,39 @@ title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
 
 %% HCB reduction method
 
-[M_hcb,K_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,1000);
+[M_hcb,K_hcb,T_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,1000);
 
-[V0_hcb,om] = eigs(M_hcb,M_hcb, n_VMs, 'SM');
+[V0s_hcb,om] = eigs(K_hcb,M_hcb, n_VMs, 'SM');
 [f0_hcb,ind] = sort(sqrt(diag(om))/2/pi);
-V0_hcb = V0_hcb(:,ind);
+V0s_hcb = V0s_hcb(:,ind);
 
-V0_hcb  = PrimalSub.unconstrain_vector(V0_hcb);
+V0s_hcb_corr = corr_reduction_indices(PrimalSub,T_hcb,L_hcb,V0s_hcb(:,2));
 
-Vs_hcb = {};
 
-for iSub=1:PrimalSub.nSubs
-    Vs_hcb{iSub} = L_hcb{iSub}*V0_hcb;
+V0_hcb = L_to_global(PrimalSub,V0s_hcb_corr);
 
-    figure
-    hold on
+corr_gmsh_indices = corr_gmsh_indices(PrimalSub,Mesh_ref);
+V0_hcb = reindex_vector(corr_gmsh_indices,V0_hcb);
 
-    
-    nodalDef = reshape(V0s{iSub}(:,mod),3,[]).';
-    iMesh = PrimalSub.Substructures(iSub).Mesh.nodes;
-    iElements = PrimalSub.Elements{iSub};
-    PlotFieldonDeformedMesh(iMesh, iElements, nodalDef, 'factor', 10)
-    
-end
+figure
+hold on
+nodalDef_hcb = reshape(V0_hcb,3,[]).';
+PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_hcb, 'factor', 1)
 colormap jet
 title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_hcb(mod),3) ...
     ' Hz with HCB reduction'])
+
+%% Differences
+
+diff_freq = abs(f0_ref-f0_hcb)./f0_ref;
+
+normV0_ref = V0_ref(:,2)/norm(V0_ref(:,2));
+
+normV0_hcb = V0_hcb/norm(V0_hcb);
+
+hcb_angle = acos(normV0_hcb'*normV0_ref)*180/pi;
+
+
+
+
 

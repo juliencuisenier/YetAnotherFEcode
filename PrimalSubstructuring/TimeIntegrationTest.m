@@ -22,6 +22,7 @@ set(myMaterial,'YOUNGS_MODULUS',E,'DENSITY',rho,'POISSONS_RATIO',nu);
 
 myElementConstructor = @()Hex8Element(myMaterial);
 
+%% SUBSTRUCTURING    
 
 % SUBMESHING:______________________________________________________________
 
@@ -76,6 +77,8 @@ indices_behind = intersect(indices_behind1,z_bc);
 
 myMesh5.set_essential_boundary_condition(indices_behind,1:3,0)
 
+
+
 % ASSEMBLY ________________________________________________________________
 % ReducedAssembly is a subclass of Assembly. It adds methods for the
 % computation of reduced internal forces, tangent stiffness matrix,
@@ -90,8 +93,6 @@ Assembly2 = Assembly(myMesh2);
 Assembly3 = Assembly(myMesh3);
 Assembly4 = Assembly(myMesh4);
 Assembly5 = Assembly(myMesh5);
-
-%% SUBSTRUCTURING                                                   
 
 % PrimalSubstructuring is a class with the basics of the substructuring and
 % uses the primal assembly model of resolution 
@@ -132,12 +133,12 @@ Mesh_ref.set_essential_boundary_condition(indices_behind,1:3,0)
 
 Assembly_ref = Assembly(Mesh_ref);
 
-M_ref = Assembly_ref.mass_matrix();
+Assembly_ref.DATA.M = Assembly_ref.mass_matrix();
 u0 = zeros( Mesh_ref.nDOFs, 1);
-[K_ref,~] = Assembly_ref.tangent_stiffness_and_force(u0);
+[Assembly_ref.DATA.K,~] = Assembly_ref.tangent_stiffness_and_force(u0);
 
-Mc_ref = Assembly_ref.constrain_matrix(M_ref);
-Kc_ref = Assembly_ref.constrain_matrix(K_ref);
+Mc_ref = Assembly_ref.constrain_matrix(Assembly_ref.DATA.M);
+Kc_ref = Assembly_ref.constrain_matrix(Assembly_ref.DATA.K);
 
 figure
 hold on
@@ -153,47 +154,21 @@ mod = 2;
 
 %Substructuring
 
-[V0,om] = eigs(PrimalSub.DATA.Kc,PrimalSub.DATA.Mc, n_VMs, 'SM');
-[f0,ind] = sort(sqrt(diag(om))/2/pi);
-V0 = V0(:,ind);
-
-V0  = PrimalSub.unconstrain_vector(V0);
-V0s = L_to_local(PrimalSub,V0);
-
-figure
-hold on
-for jSub=1:PrimalSub.nSubs
-    
-    nodalDef = reshape(V0s{jSub}(:,mod),3,[]).';
-    jMesh = PrimalSub.Substructures(jSub).Mesh.nodes;
-    jElements = PrimalSub.Elements{jSub};
-    PlotFieldonDeformedMesh(jMesh, jElements, nodalDef, 'factor', 10)
-    
-end
-colormap jet
-title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0(mod),3) ...
-    ' Hz with substructuring'])
-
+[~,om] = eigs(PrimalSub.DATA.Kc,PrimalSub.DATA.Mc, n_VMs, 'SM');
+om = sort(sqrt(diag(om)));
 
 %Global model
 
-[V0_ref,om_ref] = eigs(Kc_ref, Mc_ref, n_VMs, 'SM');
-[f0_ref,ind_ref] = sort(sqrt(diag(om_ref))/2/pi);
-V0_ref = V0_ref(:,ind_ref);
+[~,om_ref] = eigs(Kc_ref, Mc_ref, n_VMs, 'SM');
+om_ref = sort(sqrt(diag(om_ref)));
 
-V0_ref = Assembly_ref.unconstrain_vector(V0_ref);
+%% Reduction 
 
-figure
-hold on
-nodalDef_ref = reshape(V0_ref(:,mod),3,[]).';
-PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_ref, 'factor', 10)
-colormap jet
-title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
-    ' Hz with global model'])
+[M_hcb,K_hcb,V_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,1000);
 
-%% STATIC RESOLUTION
-
-%Defining the force________________________________________________________
+[~,om_hcb] = eigs(K_hcb,M_hcb, n_VMs, 'SM');
+om_hcb = sort(diag(sqrt(om_hcb)));
+%% Defining the force________________________________________________________
 
 %With substructuring
 
@@ -226,130 +201,143 @@ f4(DOFs(3)) = -S; %Force applied on the 3rd DOF of the 12th node
 %Sub5
 f5=zeros(myMesh5.nDOFs,1);
 
-Fext = {f1,f2,f3,f4,f5};
+Fs = {f1,f2,f3,f4,f5};
+
+F = L_to_global(PrimalSub,Fs);
 
 %With global reference model
 
-Fext_ref = zeros(Mesh_ref.nDOFs,1);
+F_ref = zeros(Mesh_ref.nDOFs,1);
 
 DOFs = Mesh_ref.get_DOF_from_location(loc1);
-Fext_ref(DOFs(2)) = -S; %Force of Sub1
+F_ref(DOFs(2)) = -S; %Force of Sub1
 
 DOFs = Mesh_ref.get_DOF_from_location(loc2);
-Fext_ref(DOFs(3)) = S; %Force of Sub2
+F_ref(DOFs(3)) = S; %Force of Sub2
 
 DOFs = Mesh_ref.get_DOF_from_location(loc3);
-Fext_ref(DOFs(2)) = S; %Force of Sub3
+F_ref(DOFs(2)) = S; %Force of Sub3
 
 DOFs = Mesh_ref.get_DOF_from_location(loc4);
-Fext_ref(DOFs(3)) = -S; %Force of Sub4
+F_ref(DOFs(3)) = -S; %Force of Sub4
 
-%Static resolutions________________________________________________________
+%% Time integration
 
-%Using substructuring
-u_sub = static_resolution(PrimalSub,Fext);
+%Constructing damping matrices
 
-us = L_to_local(PrimalSub,u_sub);
+ksis = 0.1*ones(5,1);
+A = [ones(5,1)./om/2 om.*ones(5,1)/2];
+least_squares = (A'*A)\A'*ksis;
+C = least_squares(1)*PrimalSub.DATA.M + least_squares(2)*PrimalSub.DATA.K;
+PrimalSub.DATA.C = zeros(PrimalSub.nDOFglobal,PrimalSub.nDOFglobal);
 
-figure
-hold on
-for jSub=1:PrimalSub.nSubs
+A_ref = [ones(5,1)./om_ref/2 om_ref.*ones(5,1)/2];
+least_squares_ref = (A_ref'*A_ref)\A_ref'*ksis;
+Assembly_ref.DATA.C = least_squares_ref(1)*Assembly_ref.DATA.M + least_squares_ref(2)*Assembly_ref.DATA.K;
+
+
+A_hcb = [ones(5,1)./om_hcb/2 om_hcb.*ones(5,1)/2];
+least_squares_hcb = (A_hcb'*A_hcb)\A_hcb'*ksis;
+C_hcb = least_squares_hcb(1)*M_hcb + least_squares_hcb(2)*K_hcb;
+[nDOFhcb,~] = size(M_hcb);
+
+
+omega_ext_ref = mean(om_ref(1:2));
+omega_ext = mean(om(1:2));
+omega_ext_hcb = mean(om_hcb(1:2));
+
+T = 2*pi/omega_ext;
+T_ref = 2*pi/omega_ext_ref;
+T_hcb = 2*pi/omega_ext_hcb;
+
+amplification_factor = 1;
+
+%Forcing function
+F_ext = @(t) amplification_factor * F * sin(omega_ext * t);
+F_ext_ref = @(t) amplification_factor * F_ref * sin(omega_ext_ref * t);
+
+
+F_ext_hcb = applying_force_hcb(PrimalSub,Fs,V_hcb,L_hcb);
+F_ext_hcb = -F_ext_hcb;
+F_ext_hcb = @(t) amplification_factor * F_ext_hcb * sin(omega_ext_hcb * t);
+
+% Initial condition: equilibrium
+u0 = zeros(PrimalSub.nDOFglobal, 1);
+v0 = zeros(PrimalSub.nDOFglobal, 1);
+a0 = zeros(PrimalSub.nDOFglobal, 1); 
+
+q0 = PrimalSub.constrain_vector(u0);
+qd0 = PrimalSub.constrain_vector(v0);
+qdd0 = PrimalSub.constrain_vector(a0); 
+
+q0_ref = Assembly_ref.constrain_vector(u0);
+qd0_ref = Assembly_ref.constrain_vector(v0);
+qdd0_ref = Assembly_ref.constrain_vector(a0);
+
+q0_hcb = zeros(nDOFhcb, 1);
+qd0_hcb = zeros(nDOFhcb, 1);
+qdd0_hcb = zeros(nDOFhcb, 1); 
+
+% time step for integration
+h = T/50;
+
+TI_lin = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
+TI_lin_ref = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
+TI_lin_hcb = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
+
+% Linear Residual evaluation function handle
+residual_lin = @(q,qd,qdd,t)residual_linear(q,qd,qdd,t,PrimalSub,F_ext);
+residual_lin_ref = @(q,qd,qdd,t)residual_linear(q,qd,qdd,t,Assembly_ref,F_ext_ref);
+residual_HCB = @(q,qd,qdd,t)residual_HCB(q,qd,qdd, t, M_hcb,C_hcb, K_hcb, F_ext_hcb);
+
+% Linearized Time Integration
+tmax = 10*T; 
+TI_lin.Integrate(q0,qd0,qdd0,tmax,residual_lin);
+TI_lin_ref.Integrate(q0_ref,qd0_ref,qdd0_ref,tmax,residual_lin_ref);
+TI_lin_hcb.Integrate(q0_hcb,qd0_hcb,qdd0_hcb,tmax,residual_HCB);
+
+% obtain full solution
+TI_lin.Solution.u = PrimalSub.unconstrain_vector(TI_lin.Solution.q);
+TI_lin_ref.Solution.u = Assembly_ref.unconstrain_vector(TI_lin_ref.Solution.q);
+
+[~,s] = size(TI_lin_ref.Solution.u);
+
+u_hcb_wrong = zeros(PrimalSub.nDOFglobal,s);
+for i=1:s
+    us_hcb_i = corr_reduction_indices(PrimalSub,V_hcb,L_hcb,TI_lin_hcb.Solution.q(:,i));
     
-    staticDef = reshape(us{jSub},3,[]).';
-    jMesh = PrimalSub.Substructures(jSub).Mesh.nodes;
-    jElements = PrimalSub.Elements{jSub};
-    PlotFieldonDeformedMesh(jMesh, jElements, staticDef, 'factor', 10)
-    
+    u_hcb_wrong(:,i) = L_to_global(PrimalSub,us_hcb_i);
 end
-colormap jet
-title('Deformation of the structure using substructuring')
-
-%Using global model
-
-Fextc_ref = Assembly_ref.constrain_vector(Fext_ref);
-
-uc_ref = Kc_ref\Fextc_ref;
-
-u_ref = Assembly_ref.unconstrain_vector(uc_ref);
-
-figure
-hold on
-staticDef_ref = reshape(u_ref,3,[]).';
-PlotFieldonDeformedMesh(nodes_ref, elements_ref, staticDef_ref, 'factor', 10)
-colormap jet
-title('Deformation of the structure using global model')
-
-%% DEFECT MODES
-
-%Using substructuring
-
-
-[~,new_K] = PrimalSub.global_mass_stiffness(us);
-new_Kc = PrimalSub.constrain_matrix(new_K);
-
-[new_V0,new_om] = eigs(new_Kc, PrimalSub.DATA.Mc, n_VMs, 'SM');
-[new_f0,new_ind] = sort(sqrt(diag(new_om))/2/pi);
-new_V0 = new_V0(:,new_ind);
-
-new_V0  = PrimalSub.unconstrain_vector(new_V0);
-new_V0s = L_to_local(PrimalSub,new_V0);
-
-figure
-hold on
-for jSub=1:PrimalSub.nSubs
-    
-    new_nodalDef = reshape(new_V0s{jSub}(:,mod),3,[]).';
-    jMesh = PrimalSub.Substructures(jSub).Mesh.nodes;
-    jElements = PrimalSub.Elements{jSub};
-    PlotFieldonDeformedMesh(jMesh, jElements, new_nodalDef, 'factor', 10)
-    
-end
-colormap jet
-title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(new_f0(mod),3) ...
-    ' Hz using substructuring with defects'])
-
-%With global model
-
-[new_K_ref,~] = Assembly_ref.tangent_stiffness_and_force(u_ref);
-
-new_Kc_ref = Assembly_ref.constrain_matrix(new_K_ref);
-
-[new_V0_ref,new_om_ref] = eigs(new_Kc_ref, Mc_ref, n_VMs, 'SM');
-[new_f0_ref,new_ind_ref] = sort(sqrt(diag(new_om_ref))/2/pi);
-new_V0_ref = new_V0_ref(:,new_ind_ref);
-
-new_V0_ref = Assembly_ref.unconstrain_vector(new_V0_ref);
-
-figure
-hold on
-new_nodalDef_ref = reshape(new_V0_ref(:,mod),3,[]).';
-PlotFieldonDeformedMesh(nodes_ref, elements_ref, new_nodalDef_ref, 'factor', 10)
-colormap jet
-title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(new_f0_ref(mod),3) ...
-    ' Hz using global model with defects'])
-
 
 %% Differences
 
+
+
+
+u = zeros(PrimalSub.nDOFglobal,s);
+u_hcb = zeros(PrimalSub.nDOFglobal,s);
 corr_gmsh_indices = corr_gmsh_indices(PrimalSub,Mesh_ref);
-V0 = reindex_vector(corr_gmsh_indices,V0(:,2));
-u_sub = reindex_vector(corr_gmsh_indices,u_sub);
-new_V0 = reindex_vector(corr_gmsh_indices,new_V0(:,2));
 
-%Vibration modes
-V0_norm = V0/norm(V0);
-V0_ref_norm = V0_ref(:,2)/norm(V0_ref(:,2));
+for i=2:s
+    u(:,i) = reindex_vector(corr_gmsh_indices,TI_lin.Solution.u(:,i));
+    u_hcb(:,i) = reindex_vector(corr_gmsh_indices,u_hcb_wrong(:,i));
+end
 
-VM_deflects_angle = acos(V0_norm'*V0_ref_norm)*180/pi;
+u_norm = zeros(PrimalSub.nDOFglobal,s);
+u_norm_ref = zeros(PrimalSub.nDOFglobal,s);
+u_norm_hcb = zeros(PrimalSub.nDOFglobal,s);
 
-%Static deflections
-u_sub_norm = u_sub/norm(u_sub);
-u_ref_norm = u_ref/norm(u_ref);
+angles = zeros(s,1);
+angles_hcb = zeros(s,1);
 
-static_deflects_angle = acos(u_sub_norm'*u_ref_norm)*180/pi;
+for i=2:s
+    u_norm(:,i) = u(:,i)/norm(u(:,i));
+    u_norm_ref(:,i) = TI_lin_ref.Solution.u(:,i)/norm(TI_lin_ref.Solution.u(:,i));
+    u_norm_hcb(:,i) = u_hcb(:,i)/norm(u_hcb(:,i));
+    
+    angles(i) = acos(u_norm(:,i)'*u_norm_ref(:,i))*180/pi;
+    angles_hcb(i) = acos(u_norm_hcb(:,i)'*u_norm_ref(:,i))*180/pi;
+end
 
-%VM with defects
-new_V0_norm = new_V0/norm(new_V0);
-new_V0_ref_norm = new_V0_ref(:,2)/norm(new_V0_ref(:,2));
-
-new_VM_deflects_angle = acos(new_V0_norm'*new_V0_ref_norm)*180/pi;
+mean_angle = mean(angles);
+mean_angle_hcb = mean(angles_hcb);

@@ -40,8 +40,8 @@ classdef PrimalSubstructuring < handle
            self.compute_Dirichlet_and_global_DOFs()
            self.compute_internal_freeDOF()
            
-           [M,self.DATA.K] = self.global_mass_stiffness(u0);
-           self.DATA.Mc = self.constrain_matrix(M);
+           [self.DATA.M,self.DATA.K] = self.global_mass_stiffness(u0);
+           self.DATA.Mc = self.constrain_matrix(self.DATA.M);
            self.DATA.Kc = self.constrain_matrix(self.DATA.K);
         end 
         
@@ -168,6 +168,7 @@ classdef PrimalSubstructuring < handle
             end
             
         end
+        
         
         function nDOFglobal = get.nDOFglobal(self)
             nDOFglobal = max(self.Us{self.nSubs});

@@ -1,19 +1,15 @@
-function u = static_resolution(self,Fext)
+function u = static_resolution(PrimalSub,Fext)
 %STATIC_RESOLUTION Summary of this function goes here
 %   Detailed explanation goes here
 
-fg = [];
+fg = zeros(PrimalSub.nDOFglobal,1);
 
-for iSub=1:self.nSubs
-    if isempty(fg)
-        fg = self.L{iSub}'*Fext{iSub};
-    else
-        fg = fg + self.L{iSub}'*Fext{iSub};
-    end
+for iSub=1:PrimalSub.nSubs
+    fg = fg + PrimalSub.L{iSub}'*Fext{iSub};
 end
 
-fgc = self.constrain_vector(fg);
-uc = self.DATA.Kc\fgc;
-u = self.unconstrain_vector(uc);
+fgc = PrimalSub.constrain_vector(fg);
+uc = PrimalSub.DATA.Kc\fgc;
+u = PrimalSub.unconstrain_vector(uc);
 end
 

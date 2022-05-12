@@ -229,7 +229,7 @@ ksis = 0.1*ones(5,1);
 A = [ones(5,1)./om/2 om.*ones(5,1)/2];
 least_squares = (A'*A)\A'*ksis;
 C = least_squares(1)*PrimalSub.DATA.M + least_squares(2)*PrimalSub.DATA.K;
-PrimalSub.DATA.C = zeros(PrimalSub.nDOFglobal,PrimalSub.nDOFglobal);
+
 
 A_ref = [ones(5,1)./om_ref/2 om_ref.*ones(5,1)/2];
 least_squares_ref = (A_ref'*A_ref)\A_ref'*ksis;

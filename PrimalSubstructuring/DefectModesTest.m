@@ -353,3 +353,11 @@ new_V0_norm = new_V0/norm(new_V0);
 new_V0_ref_norm = new_V0_ref(:,2)/norm(new_V0_ref(:,2));
 
 new_VM_deflects_angle = acos(new_V0_norm'*new_V0_ref_norm)*180/pi;
+
+om = sort(sqrt(diag(om))/2/pi);
+ksis = 0.1*ones(5,1);
+A = [ones(5,1)./om/2 om.*ones(5,1)/2];
+least_squares = (A'*A)\A'*ksis;
+C = least_squares(1)*PrimalSub.DATA.M + least_squares(2)*PrimalSub.DATA.K;
+PrimalSub.DATA.Cc = PrimalSub.constrain_matrix(C);
+[FRFs] = frf_substructuring(PrimalSub,Fext,410,100,1000);

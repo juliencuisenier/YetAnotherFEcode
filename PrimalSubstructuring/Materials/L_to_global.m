@@ -1,6 +1,7 @@
 function [u] = L_to_global(PrimalSub,us)
 %L_TO_GLOBAL Summary of this function goes here
-%   Detailed explanation goes here
+%   From a substructured vector, constructs the global vector, assuming
+%   that for a given interface, there are only two substructures
 
 u = zeros(PrimalSub.nDOFglobal,1);
 

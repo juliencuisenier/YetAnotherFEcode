@@ -1,10 +1,10 @@
-function [Vs_corr] = corr_reduction_indices(PrimalSub,T_hcb,L_hcb,V_hcb)
+function [Vs_corr] = converter_reducted_vector(PrimalSub,T_hcb,L_hcb,V_hcb)
 %CORR_REDUCTIONINDICES Summary of this function goes here
 %   Detailed explanation goes here
 
 nSubs = PrimalSub.nSubs;
-Vs_corr = cell(1,nSubs);
 Vs = cell(1,nSubs);
+Vs_corr = cell(1,nSubs);
 
 for iSub=1:nSubs
     Vs_hcb = L_hcb{iSub}*V_hcb;
@@ -29,7 +29,7 @@ for iSub=1:nSubs
     end
     
     for i=1:nDOFinterface
-        Vs_corr{iSub}(InterfaceUs(i)) = Vs{iSub}(i+nDOFinternalFree)/2;
+        Vs_corr{iSub}(InterfaceUs(i)) = Vs{iSub}(i+nDOFinternalFree);
     end
     
 end

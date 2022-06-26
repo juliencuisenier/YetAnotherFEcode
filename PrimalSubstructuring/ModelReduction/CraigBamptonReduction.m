@@ -9,8 +9,8 @@ T_hcb = cell(1,nSubs);
 Us_hcb = cell(1,nSubs);
 L_hcb = cell(1,nSubs);
 
-Ms_rearranged = cell(1,nSubs);
-Ks_rearranged = cell(1,nSubs);
+Mcs_rearranged = cell(1,nSubs);
+Kcs_rearranged = cell(1,nSubs);
 
 ms = zeros(1,nSubs);
 
@@ -47,11 +47,11 @@ for iSub=1:nSubs
     IVM = [V0_i;zeros(nInts,m)];
     
     T_hcb{iSub} = [IVM CM]; 
-    Ms_rearranged{iSub} = [Ms_ii Ms(Us_internal,Us_interface); Ms(Us_interface,Us_internal) Ms(Us_interface,Us_interface)];
-    Ks_rearranged{iSub} = [Ks_ii Ks_ib; Ks(Us_interface,Us_internal) Ks(Us_interface,Us_interface)];
+    Mcs_rearranged{iSub} = [Ms_ii Ms(Us_internal,Us_interface); Ms(Us_interface,Us_internal) Ms(Us_interface,Us_interface)];
+    Kcs_rearranged{iSub} = [Ks_ii Ks_ib; Ks(Us_interface,Us_internal) Ks(Us_interface,Us_interface)];
     ms(iSub) = m;
     
-    Us_hcb{iSub} = zeros(1,m+nInts);
+    Us_hcb{iSub} = zeros(m+nInts,1);
     
     nInternalDOFglobal_hcb = nInternalDOFglobal_hcb + m;
 end
@@ -60,8 +60,9 @@ nDOFglobal_hcb = nInternalDOFglobal_hcb + PrimalSub.nInt*nDOFPerNode;
 
 U = 1:nDOFglobal_hcb';
 
-InternalDOFdone = 0;
+
 InterfaceDOFdone = nInternalDOFglobal_hcb;
+InternalDOFdone = 0;
 IntsDOFdone = zeros(1,nSubs);
 
 
@@ -69,25 +70,28 @@ Interfaces = PrimalSub.Interfaces;
 
 %Second Loop to assignate the DOFs
 for iSub=1:nSubs
+
     m = ms(iSub);
     Us_hcb{iSub}(1:m) = U(InternalDOFdone+1:InternalDOFdone+m);
     
     InternalDOFdone = InternalDOFdone + m;
-    
     
     Interfaces_loc = Interfaces(Interfaces(:,iSub)~=0,:);
     
     for jSub=iSub+1:nSubs
         ind = find(Interfaces_loc(:,jSub));
         if ~isempty(ind)
-            nInts = length(ind)*nDOFPerNode;
-            Us_hcb{iSub}(m+IntsDOFdone(iSub)+1:m+IntsDOFdone(iSub)+nInts) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts);
-            Us_hcb{jSub}(ms(jSub)+IntsDOFdone(jSub)+1:ms(jSub)+IntsDOFdone(jSub)+nInts) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts);
-            InterfaceDOFdone = InterfaceDOFdone + nInts;
-            IntsDOFdone(iSub) = IntsDOFdone(iSub) + nInts;
-            IntsDOFdone(jSub) = IntsDOFdone(jSub) + nInts;
+            nInts_loc = length(ind)*nDOFPerNode;
+            Us_hcb{iSub}(m+IntsDOFdone(iSub)+1:m+IntsDOFdone(iSub)+nInts_loc) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts_loc);
+            Us_hcb{jSub}(ms(jSub)+IntsDOFdone(jSub)+1:ms(jSub)+IntsDOFdone(jSub)+nInts_loc) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts_loc);
+            InterfaceDOFdone = InterfaceDOFdone + nInts_loc;
+            IntsDOFdone(iSub) = IntsDOFdone(iSub) + nInts_loc;
+            IntsDOFdone(jSub) = IntsDOFdone(jSub) + nInts_loc;
         end
     end 
+    
+    
+    
 end
 
 %Loop to build L_hcb
@@ -104,10 +108,10 @@ M_hcb = [];
 K_hcb = [];
 
 for iSub=1:nSubs
-  
+      
+    Kcs = Kcs_rearranged{iSub};
+    Mcs = Mcs_rearranged{iSub};
     
-    Mcs = Ms_rearranged{iSub};
-    Kcs = Ks_rearranged{iSub};
     
     Ms_hcb = T_hcb{iSub}'*Mcs*T_hcb{iSub};
     

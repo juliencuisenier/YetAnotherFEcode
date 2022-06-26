@@ -209,6 +209,8 @@ classdef PrimalSubstructuring < handle
             for iSub=1:self.nSubs
                 for jSub=iSub+1:self.nSubs
                     
+                    %Finding the common nodes between iSub and jSub
+                    %substructures
                     LocalInterface = intersect(self.globalIndices{iSub},...
                         self.globalIndices{jSub});
                     
@@ -216,15 +218,15 @@ classdef PrimalSubstructuring < handle
                         
                         nIntLocal = length(LocalInterface);
                         
-                        reindexed_Interface1 = [];
-                        reindexed_Interface2 = [];
-            
+                        reindexed_Interface1 = zeros(nIntLocal,1);
+                        reindexed_Interface2 = zeros(nIntLocal,1);
+                        
+                        %Changing the indices in order to have the local
+                        %indices of the substructure instead of the gmesh's
+                        %global ones
                         for i=1:nIntLocal
-                            reindexed_Interface1 = [reindexed_Interface1; ...
-                                find(self.globalIndices{iSub}== LocalInterface(i))];
-                    
-                            reindexed_Interface2 = [reindexed_Interface2; ...
-                                find(self.globalIndices{jSub}== LocalInterface(i))];
+                            reindexed_Interface1(i) = find(self.globalIndices{iSub}==LocalInterface(i));
+                            reindexed_Interface2(i) = find(self.globalIndices{jSub}== LocalInterface(i));
                         end
                         
                         
@@ -252,11 +254,10 @@ classdef PrimalSubstructuring < handle
             
             for iSub=1:self.nSubs
                 
-                iElements = [];
+                iElements = zeros(self.Substructures(iSub).Mesh.nElements,self.Substructures(iSub).Mesh.Elements(1).Object.nNodes);
                 
                 for j=1:self.Substructures(iSub).Mesh.nElements
-                    iElements = [iElements;...
-                        self.Substructures(iSub).Mesh.Elements(j).Object.nodeIDs];
+                    iElements(j,:) = self.Substructures(iSub).Mesh.Elements(j).Object.nodeIDs;
                 end
                 
                 self.Elements{iSub} = iElements;

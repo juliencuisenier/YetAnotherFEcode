@@ -26,7 +26,7 @@ myElementConstructor = @()Hex8Element(myMaterial);
 
 % SUBMESHING:______________________________________________________________
 
-TotalMesh = load_gmsh2("RotorSketch2.msh", -1); %reading the .msh file
+TotalMesh = load_gmsh2("RotorSketch.msh", -1); %reading the .msh file
 
 Submeshes = Submeshing(TotalMesh);
 
@@ -59,21 +59,21 @@ myMesh5 = Mesh(Submeshes{5,1});
 myMesh5.create_elements_table(Submeshes{5,2}, myElementConstructor);
 
 %At front of the heart
-x_front = find(myMesh5.nodes(:,1)==1);
-y_bc = find(abs(myMesh5.nodes(:,2))<=0.35);
-z_bc = find(abs(myMesh5.nodes(:,3))<=0.35);
+z_front = find(myMesh5.nodes(:,3)==1);
+x_bc = find(abs(myMesh5.nodes(:,1))<=0.5);
+y_bc = find(abs(myMesh5.nodes(:,2))<=0.5);
 
-indices_front1 = intersect(x_front,y_bc);
-indices_front = intersect(indices_front1,z_bc);
+indices_front1 = intersect(z_front,x_bc);
+indices_front = intersect(indices_front1,y_bc);
 
 myMesh5.set_essential_boundary_condition(indices_front,1:3,0)
 
 %At behind of the heart
 
-x_behind = find(myMesh5.nodes(:,1)==0);
+z_behind = find(myMesh5.nodes(:,1)==0);
 
-indices_behind1 = intersect(x_behind,y_bc);
-indices_behind = intersect(indices_behind1,z_bc);
+indices_behind1 = intersect(z_behind,x_bc);
+indices_behind = intersect(indices_behind1,y_bc);
 
 myMesh5.set_essential_boundary_condition(indices_behind,1:3,0)
 
@@ -110,21 +110,21 @@ Mesh_ref.create_elements_table(elements_ref, myElementConstructor)
 %Boundaries conditions
 
 %At front of the heart
-x_front = find(nodes_ref(:,1)==1);
-y_bc = find(abs(nodes_ref(:,2))<=0.35);
-z_bc = find(abs(nodes_ref(:,3))<=0.35);
+z_front = find(nodes_ref(:,1)==1);
+x_bc = find(abs(nodes_ref(:,2))<=0.35);
+y_bc = find(abs(nodes_ref(:,3))<=0.35);
 
-indices_front1 = intersect(x_front,y_bc);
-indices_front = intersect(indices_front1,z_bc);
+indices_front1 = intersect(z_front,x_bc);
+indices_front = intersect(indices_front1,y_bc);
 
 Mesh_ref.set_essential_boundary_condition(indices_front,1:3,0)
 
 %At behind of the heart
 
-x_behind = find(nodes_ref(:,1)==0);
+z_behind = find(nodes_ref(:,1)==0);
 
-indices_behind1 = intersect(x_behind,y_bc);
-indices_behind = intersect(indices_behind1,z_bc);
+indices_behind1 = intersect(z_behind,x_bc);
+indices_behind = intersect(indices_behind1,y_bc);
 
 Mesh_ref.set_essential_boundary_condition(indices_behind,1:3,0)
 
@@ -175,28 +175,28 @@ om_hcb = sort(diag(sqrt(om_hcb)));
 S = 1e6;
 
 %Sub1
-loc1 = [0.5 0.15 2.5];
+loc1 = [-2.5 -0.15 0.5];
 DOFs = PrimalSub.Substructures(1).Mesh.get_DOF_from_location(loc1);
 f1=zeros(myMesh1.nDOFs,1);
-f1(DOFs(2)) = -S; %Force applied on the 2nd DOF of the 33rd node
+f1(DOFs(2)) = S;
 
 %Sub2
-loc2 = [0.5 2.5 -0.15];
+loc2 = [-0.15 2.5 0.5];
 DOFs = PrimalSub.Substructures(2).Mesh.get_DOF_from_location(loc2);
 f2=zeros(myMesh2.nDOFs,1);
-f2(DOFs(3)) = S; %Force applied on the 3th DOF of the 32nd node
+f2(DOFs(1)) = S;
 
 %Sub3
-loc3 = [0.5 -0.15 -2.5];
+loc3 = [2.5 0.15 0.5];
 DOFs = PrimalSub.Substructures(3).Mesh.get_DOF_from_location(loc3);
 f3=zeros(myMesh3.nDOFs,1);
-f3(DOFs(2)) = S; %Force applied on the 2nd DOF of the 22nd node
+f3(DOFs(2)) = -S;
 
 %Sub4
-loc4 = [0.5 -2.5 0.15];
+loc4 = [0.15 -2.5 0.5];
 DOFs = PrimalSub.Substructures(4).Mesh.get_DOF_from_location(loc4);
 f4=zeros(myMesh4.nDOFs,1);
-f4(DOFs(3)) = -S; %Force applied on the 3rd DOF of the 12th node
+f4(DOFs(1)) = -S;
 
 %Sub5
 f5=zeros(myMesh5.nDOFs,1);
@@ -213,13 +213,13 @@ DOFs = Mesh_ref.get_DOF_from_location(loc1);
 F_ref(DOFs(2)) = -S; %Force of Sub1
 
 DOFs = Mesh_ref.get_DOF_from_location(loc2);
-F_ref(DOFs(3)) = S; %Force of Sub2
+F_ref(DOFs(1)) = S; %Force of Sub2
 
 DOFs = Mesh_ref.get_DOF_from_location(loc3);
 F_ref(DOFs(2)) = S; %Force of Sub3
 
 DOFs = Mesh_ref.get_DOF_from_location(loc4);
-F_ref(DOFs(3)) = -S; %Force of Sub4
+F_ref(DOFs(1)) = -S; %Force of Sub4
 
 %% Time integration
 
@@ -258,7 +258,6 @@ F_ext_ref = @(t) amplification_factor * F_ref * sin(omega_ext_ref * t);
 
 
 F_ext_hcb = applying_force_hcb(PrimalSub,Fs,V_hcb,L_hcb);
-F_ext_hcb = -F_ext_hcb;
 F_ext_hcb = @(t) amplification_factor * F_ext_hcb * sin(omega_ext_hcb * t);
 
 % Initial condition: equilibrium
@@ -279,7 +278,7 @@ qd0_hcb = zeros(nDOFhcb, 1);
 qdd0_hcb = zeros(nDOFhcb, 1); 
 
 % time step for integration
-h = T/50;
+h = T/5;
 
 TI_lin = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
 TI_lin_ref = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
@@ -312,8 +311,6 @@ end
 %% Differences
 
 
-
-
 u = zeros(PrimalSub.nDOFglobal,s);
 u_hcb = zeros(PrimalSub.nDOFglobal,s);
 corr_gmsh_indices = corr_gmsh_indices(PrimalSub,Mesh_ref);
@@ -335,9 +332,19 @@ for i=2:s
     u_norm_ref(:,i) = TI_lin_ref.Solution.u(:,i)/norm(TI_lin_ref.Solution.u(:,i));
     u_norm_hcb(:,i) = u_hcb(:,i)/norm(u_hcb(:,i));
     
-    angles(i) = acos(u_norm(:,i)'*u_norm_ref(:,i))*180/pi;
+    angles(i) = acos(u_norm(:,i)'*u_norm_ref(:,i)*0.999999)*180/pi;
     angles_hcb(i) = acos(u_norm_hcb(:,i)'*u_norm_ref(:,i))*180/pi;
 end
 
 mean_angle = mean(angles);
 mean_angle_hcb = mean(angles_hcb);
+
+%% Plot
+t = TI_lin.Solution.time;
+dof = 221; %taking a random dof 
+figure
+plot(t,TI_lin_ref.Solution.u(dof,:),'k.-')
+hold on
+plot(t,u(dof,:),'b-')
+plot(t,u_hcb(dof,:),'r--')
+legend('Reference model','Substructuring','Reduced model')

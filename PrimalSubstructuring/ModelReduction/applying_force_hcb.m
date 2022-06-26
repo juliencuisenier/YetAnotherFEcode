@@ -16,7 +16,7 @@ for iSub=1:PrimalSub.nSubs
     fs(1:nInternalDOF) = Fs{iSub}(PrimalSub.InternalFreeDOF{iSub});
     fs(nInternalDOF+1:end) = Fs{iSub}(PrimalSub.InterfaceDOF{iSub});
     
-    fs_hcb = (T_hcb{iSub}'*T_hcb{iSub})\T_hcb{iSub}'*fs;
+    fs_hcb = T_hcb{iSub}'*fs;
     F_hcb = F_hcb + L_hcb{iSub}'*fs_hcb;
 end
 

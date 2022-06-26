@@ -25,7 +25,7 @@ myElementConstructor = @()Hex8Element(myMaterial);
 
 % SUBMESHING:______________________________________________________________
 
-TotalMesh = load_gmsh2("RotorSketch2.msh", -1); %reading the .msh file
+TotalMesh = load_gmsh2("RotorSketch.msh", -1); %reading the .msh file
 
 Submeshes = Submeshing(TotalMesh);
 
@@ -58,21 +58,21 @@ myMesh5 = Mesh(Submeshes{5,1});
 myMesh5.create_elements_table(Submeshes{5,2}, myElementConstructor);
 
 %At front of the heart
-x_front = find(myMesh5.nodes(:,1)==1);
-y_bc = find(abs(myMesh5.nodes(:,2))<=0.35);
-z_bc = find(abs(myMesh5.nodes(:,3))<=0.35);
+z_front = find(myMesh5.nodes(:,3)==1);
+x_bc = find(abs(myMesh5.nodes(:,1))<=0.5);
+y_bc = find(abs(myMesh5.nodes(:,2))<=0.5);
 
-indices_front1 = intersect(x_front,y_bc);
-indices_front = intersect(indices_front1,z_bc);
+indices_front1 = intersect(z_front,x_bc);
+indices_front = intersect(indices_front1,y_bc);
 
 myMesh5.set_essential_boundary_condition(indices_front,1:3,0)
 
 %At behind of the heart
 
-x_behind = find(myMesh5.nodes(:,1)==0);
+z_behind = find(myMesh5.nodes(:,3)==0);
 
-indices_behind1 = intersect(x_behind,y_bc);
-indices_behind = intersect(indices_behind1,z_bc);
+indices_behind1 = intersect(z_behind,x_bc);
+indices_behind = intersect(indices_behind1,y_bc);
 
 myMesh5.set_essential_boundary_condition(indices_behind,1:3,0)
 
@@ -100,7 +100,7 @@ globalIndices = get_globalIndices(Submeshes);
 PrimalSub = PrimalSubstructuring([Assembly1 Assembly2...
     Assembly3 Assembly4 Assembly5],globalIndices,[]);
 
-%% REFERENCE MODEL_________________________________________________________
+%% REFERENCE MODEL
 [nodes_ref,elements_ref,nset_ref] = extract_gmsh(TotalMesh);
 
 Mesh_ref = Mesh(nodes_ref);
@@ -109,21 +109,21 @@ Mesh_ref.create_elements_table(elements_ref, myElementConstructor)
 %Boundaries conditions
 
 %At front of the heart
-x_front = find(nodes_ref(:,1)==1);
-y_bc = find(abs(nodes_ref(:,2))<=0.35);
-z_bc = find(abs(nodes_ref(:,3))<=0.35);
+z_front = find(nodes_ref(:,3)==1);
+x_bc = find(abs(nodes_ref(:,1))<=0.5);
+y_bc = find(abs(nodes_ref(:,2))<=0.5);
 
-indices_front1 = intersect(x_front,y_bc);
-indices_front = intersect(indices_front1,z_bc);
+indices_front1 = intersect(z_front,x_bc);
+indices_front = intersect(indices_front1,y_bc);
 
 Mesh_ref.set_essential_boundary_condition(indices_front,1:3,0)
 
 %At behind of the heart
 
-x_behind = find(nodes_ref(:,1)==0);
+z_behind = find(nodes_ref(:,3)==0);
 
-indices_behind1 = intersect(x_behind,y_bc);
-indices_behind = intersect(indices_behind1,z_bc);
+indices_behind1 = intersect(z_behind,x_bc);
+indices_behind = intersect(indices_behind1,y_bc);
 
 Mesh_ref.set_essential_boundary_condition(indices_behind,1:3,0)
 
@@ -200,28 +200,28 @@ title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
 S = 1e6;
 
 %Sub1
-loc1 = [0.5 0.15 2.5];
+loc1 = [-2.5 -0.15 0.5];
 DOFs = PrimalSub.Substructures(1).Mesh.get_DOF_from_location(loc1);
 f1=zeros(myMesh1.nDOFs,1);
-f1(DOFs(2)) = -S; %Force applied on the 2nd DOF of the 33rd node
+f1(DOFs(2)) = S;
 
 %Sub2
-loc2 = [0.5 2.5 -0.15];
+loc2 = [-0.15 2.5 0.5];
 DOFs = PrimalSub.Substructures(2).Mesh.get_DOF_from_location(loc2);
 f2=zeros(myMesh2.nDOFs,1);
-f2(DOFs(3)) = S; %Force applied on the 3th DOF of the 32nd node
+f2(DOFs(1)) = S;
 
 %Sub3
-loc3 = [0.5 -0.15 -2.5];
+loc3 = [2.5 0.15 0.5];
 DOFs = PrimalSub.Substructures(3).Mesh.get_DOF_from_location(loc3);
 f3=zeros(myMesh3.nDOFs,1);
-f3(DOFs(2)) = S; %Force applied on the 2nd DOF of the 22nd node
+f3(DOFs(2)) = -S;
 
 %Sub4
-loc4 = [0.5 -2.5 0.15];
+loc4 = [0.15 -2.5 0.5];
 DOFs = PrimalSub.Substructures(4).Mesh.get_DOF_from_location(loc4);
 f4=zeros(myMesh4.nDOFs,1);
-f4(DOFs(3)) = -S; %Force applied on the 3rd DOF of the 12th node
+f4(DOFs(1)) = -S;
 
 %Sub5
 f5=zeros(myMesh5.nDOFs,1);
@@ -233,16 +233,16 @@ Fext = {f1,f2,f3,f4,f5};
 Fext_ref = zeros(Mesh_ref.nDOFs,1);
 
 DOFs = Mesh_ref.get_DOF_from_location(loc1);
-Fext_ref(DOFs(2)) = -S; %Force of Sub1
+Fext_ref(DOFs(2)) = S; %Force of Sub1
 
 DOFs = Mesh_ref.get_DOF_from_location(loc2);
-Fext_ref(DOFs(3)) = S; %Force of Sub2
+Fext_ref(DOFs(1)) = S; %Force of Sub2
 
 DOFs = Mesh_ref.get_DOF_from_location(loc3);
-Fext_ref(DOFs(2)) = S; %Force of Sub3
+Fext_ref(DOFs(2)) = -S; %Force of Sub3
 
 DOFs = Mesh_ref.get_DOF_from_location(loc4);
-Fext_ref(DOFs(3)) = -S; %Force of Sub4
+Fext_ref(DOFs(1)) = -S; %Force of Sub4
 
 %Static resolutions________________________________________________________
 

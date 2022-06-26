@@ -1,6 +1,6 @@
 function u = static_resolution(PrimalSub,Fext)
-%STATIC_RESOLUTION Summary of this function goes here
-%   Detailed explanation goes here
+%STATIC_RESOLUTION 
+%Solve a static problem. Fext is a (1,nSubs) cell
 
 fg = zeros(PrimalSub.nDOFglobal,1);
 

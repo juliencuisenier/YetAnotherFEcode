@@ -136,7 +136,7 @@ n_VMS = 5;
 [f0_hcb,ind] = sort(sqrt(diag(om))/2/pi);
 V0s_hcb = V0s_hcb(:,ind);
 
-V0s_hcb_corr = corr_reduction_indices(PrimalSub,T_hcb,L_hcb,V0s_hcb(:,2));
+V0s_hcb_corr = reindex_vector(PrimalSub,T_hcb,L_hcb,V0s_hcb(:,2));
 
 
 V0_hcb = L_to_global(PrimalSub,V0s_hcb_corr);

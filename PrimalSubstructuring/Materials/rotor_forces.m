@@ -1,8 +1,8 @@
-function [Cc,Zc,Cs,Zs] = rotor_forces(PrimalSub,rho)
+function [Cr,Z] = rotor_forces(PrimalSub,rho)
 %ROTOR_FORCES Summary of this function goes here
 %   Omega is the rotationnal speed of the rotor
 
-C = sparse(PrimalSub.nDOFglobal,PrimalSub.nDOFglobal);
+Cr = sparse(PrimalSub.nDOFglobal,PrimalSub.nDOFglobal);
 Z = sparse(PrimalSub.nDOFglobal,PrimalSub.nDOFglobal);
 
 Zs = cell(1,PrimalSub.nSubs);
@@ -33,15 +33,11 @@ for iSub=1:PrimalSub.nSubs
         Z_s = Z_s +E'*Zp*E;
     end
     
-    C = C + PrimalSub.L{iSub}'*C_s*PrimalSub.L{iSub};  
+    Cr = Cr + PrimalSub.L{iSub}'*C_s*PrimalSub.L{iSub};  
     Z = Z + PrimalSub.L{iSub}'*Z_s*PrimalSub.L{iSub};
-    Cs{iSub} = C_s;
-    Zs{iSub} = Z_s;
     
 end
 
-Cc = PrimalSub.constrain_matrix(C);
-Zc = PrimalSub.constrain_matrix(Z);
 
 end
 

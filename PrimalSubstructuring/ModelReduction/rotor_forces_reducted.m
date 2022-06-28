@@ -47,16 +47,15 @@ for iSub=1:PrimalSub.nSubs
     Cs_hcb = T_hcb{iSub}'*Cs_rearranged*T_hcb{iSub};
     Zs_hcb = T_hcb{iSub}'*Zs_rearranged*T_hcb{iSub};
     
-%     if isempty(C_hcb)
-%         C_hcb = L_hcb{iSub}'*Cs_hcb*L_hcb{iSub};
-%         Z_hcb = L_hcb{iSub}'*Zs_hcb*L_hcb{iSub};
-%     else
-%         C_hcb = C_hcb + L_hcb{iSub}'*Cs_hcb*L_hcb{iSub};
-%         Z_hcb = Z_hcb + L_hcb{iSub}'*Zs_hcb*L_hcb{iSub};
-%     end
+    if isempty(C_hcb)
+        C_hcb = L_hcb{iSub}'*Cs_hcb*L_hcb{iSub};
+        Z_hcb = L_hcb{iSub}'*Zs_hcb*L_hcb{iSub};
+    else
+        C_hcb = C_hcb + L_hcb{iSub}'*Cs_hcb*L_hcb{iSub};
+        Z_hcb = Z_hcb + L_hcb{iSub}'*Zs_hcb*L_hcb{iSub};
+    end
 
-    C_hcb = L_hcb{iSub}'*Cs_hcb*L_hcb{iSub};
-    Z_hcb = L_hcb{iSub}'*Zs_hcb*L_hcb{iSub};
+
 
     
 end

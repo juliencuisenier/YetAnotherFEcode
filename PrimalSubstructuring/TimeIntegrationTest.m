@@ -303,7 +303,7 @@ TI_lin_ref.Solution.u = Assembly_ref.unconstrain_vector(TI_lin_ref.Solution.q);
 
 u_hcb_wrong = zeros(PrimalSub.nDOFglobal,s);
 for i=1:s
-    us_hcb_i = corr_reduction_indices(PrimalSub,V_hcb,L_hcb,TI_lin_hcb.Solution.q(:,i));
+    us_hcb_i = converter_reducted_vector(PrimalSub,V_hcb,L_hcb,TI_lin_hcb.Solution.q(:,i));
     
     u_hcb_wrong(:,i) = L_to_global(PrimalSub,us_hcb_i);
 end

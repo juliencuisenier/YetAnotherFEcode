@@ -226,7 +226,7 @@ Fs = cell(1,PrimalSub.nSubs);
 loc = [0.15 2.5 0.5];
 locDOFs = PrimalSub.Substructures(2).Mesh.get_DOF_from_location(loc);
 f=zeros(myMesh2.nDOFs,1);
-f(locDOFs(1)) = -S;
+f(locDOFs(1)) = S;
 Fs{2} = f;
 
 Fs{1} = zeros(myMesh1.nDOFs,1);
@@ -237,7 +237,7 @@ Fs{5} = zeros(myMesh5.nDOFs,1);
 %Applying the force on the global system
 locDOFs = Mesh_ref.get_DOF_from_location(loc);
 F_ref=zeros(Mesh_ref.nDOFs,1);
-F_ref(locDOFs(1)) = -S;
+F_ref(locDOFs(1)) = S;
 
 Fc_ref = Assembly_ref.constrain_vector(F_ref);
 
@@ -262,10 +262,16 @@ C_hcb = least_squares_hcb(1)*M_hcb + least_squares_hcb(2)*K_hcb;
 
 fn = 100;
 fmax = 200;
-DOFs = 200;
 
 
-[FRF] = frf_substructuring(PrimalSub,Fs,DOFs,fmax,fn);
+loc = [-2.5 0.15 0.5];
+DOFs_s = PrimalSub.Substructures(1).Mesh.get_DOF_from_location(loc);
+DOFs_s = DOFs_s(2);
+DOFs_ref = Assembly_ref.Mesh.get_DOF_from_location(loc);
+DOFs_ref = DOFs_ref(2);
+
+
+[FRF] = frf_substructuring(PrimalSub,Fs,DOFs_s,fmax,fn);
 
 
 %Calculating the FRF og the global model
@@ -277,18 +283,13 @@ for i=1:fn
     FRF_ref(:,i) = Assembly_ref.unconstrain_vector(G\Fc_ref);
 end
 
-Subs_dof = 1:PrimalSub.nDOFglobal;
-Subs_dof = Subs_dof';
-
-Translation = reindex_vector(corr_gmsh_indices,Subs_dof);
-DOFs_ref = Translation(DOFs);
 
 for xi=DOFs_ref
    figure
    hold on
    subplot(2,1,1);
    plot(freqs,abs(FRF_ref(xi,:)));
-   title(strcat('Module of the DOF ',num2str(xi),"'s FRF"));
+   title(strcat('Module of the DOF ',num2str(xi),"'s FRF (global model)"));
    xlabel('Frequency');
    set(gca,'yscale','log');
    subplot(2,1,2);
@@ -297,7 +298,7 @@ for xi=DOFs_ref
    xlabel('Frequency');
 end
 
-[FRF_hcb] = frf_hcb(PrimalSub,M_hcb,C_hcb,K_hcb,T_hcb,L_hcb,Fs,DOFs,fmax,fn);
+[FRF_hcb] = frf_hcb(PrimalSub,M_hcb,C_hcb,K_hcb,T_hcb,L_hcb,Fs,DOFs_s,fmax,fn);
 
 
 
@@ -311,12 +312,16 @@ normV0_hcb = V0_hcb/norm(V0_hcb);
 
 hcb_angle = acos(normV0_hcb'*normV0_ref)*180/pi;
 
-normFRF = FRF(200,:)/norm(FRF(200,:));
-normFRF_ref = FRF_ref(DOFs_ref,:)/norm(FRF_ref(DOFs_ref,:));
-normFRF_hcb = FRF_hcb(200,:)/norm(FRF_hcb(200,:));
+FRF_dof = abs(FRF(DOFs_s,:));
+FRF_dof_ref = abs(FRF_ref(DOFs_ref,:));
+FRF_dof_hcb = abs(FRF_hcb(DOFs_s,:));
 
-FRF_sub_angle = acos(abs(normFRF)*abs(normFRF_ref)')*180/pi;
-FRF_hcb_angle = acos(abs(normFRF_hcb)*abs(normFRF_ref)')*180/pi;
+normFRF = FRF_dof/norm(FRF_dof);
+normFRF_ref = FRF_dof_ref/norm(FRF_dof_ref);
+normFRF_hcb = FRF_dof_hcb/norm(FRF_dof_hcb);
+
+FRF_sub_angle = acos(normFRF*normFRF_ref')*180/pi;
+FRF_hcb_angle = acos(normFRF_hcb*normFRF_ref')*180/pi;
 
 
 

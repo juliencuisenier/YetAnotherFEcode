@@ -18,7 +18,7 @@ classdef PrimalSubstructuring < handle
         Us = {}          %cell array with global DOF indices vectors of the substructures
         L = {}           %Localization matrix
         
-        Elements = {} %cell array containing the IDs of each substrcture
+        Elements = {} %cell array containing the IDs of each elements' substrcture
         
         globalIndices  %cell array containing the indices of the global structure
         
@@ -304,6 +304,32 @@ classdef PrimalSubstructuring < handle
                     K = K + Ks;
                  end
             end
+        end
+        
+        function global_spinning_matrices(self,Omega)
+           % Update damping and  stiffness matrices to take into account
+           % the rotation of the system.
+           % You must have already computed structural damping before using
+           % this method
+           
+           G = sparse(self.nDOFglobal,self.nDOFglobal);
+           Ksp = sparse(self.nDOFglobal,self.nDOFglobal);
+           
+           for iSub=1:self.nSubs
+               Gs = self.Substructures(iSub).coriolis_matrix(Omega);
+               Ksps = self.Substructures(iSub).spin_softening_matrix(Omega);
+               
+               Ls = self.L{iSub};
+               
+               G = G + Ls'*Gs*Ls;
+               Ksp = Ksp + Ls'*Ksps*Ls;              
+           end
+           
+           self.DATA.C = self.DATA.C + G;
+           self.DATA.K = self.DATA.K - Ksp;
+           self.DATA.Cc = self.constrain_matrix(self.DATA.C);
+           self.DATA.Kc = self.constrain_matrix(self.DATA.K);
+   
         end
         
         

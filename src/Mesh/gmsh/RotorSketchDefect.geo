@@ -249,137 +249,233 @@ Line(96) = {6, 10};
 //+
 Line(97) = {8, 12};
 
-Curve Loop(1) = {33, 34, 35, 36};
+
+//Defects
+Point(53) = {0.2, 0.9, 0.1, h};
+Point(54) = {0.2, 0.9, 0.9, h};
+Point(55) = {-0.1, 0.9, 0.1, h};
+Point(56) = {-0.1, 0.9, 0.9, h};
+
+
+//+
+Recursive Delete {
+  Curve{14}; 
+}
+//+
+Recursive Delete {
+  Curve{11}; Curve{13}; Curve{12}; 
+}
+//+
+Curve Loop(1) = {49, 51, 48, -42};
+//+
 Plane Surface(1) = {1};
-
-Curve Loop(2) = {31, -35, -29, 24};
+//+
+Curve Loop(2) = {51, 52, 53, 54};
+//+
 Plane Surface(2) = {2};
-
-Curve Loop(3) = {30, 34, -29, -20};
+//+
+Curve Loop(3) = {47, 53, -50, -45};
+//+
 Plane Surface(3) = {3};
-
-Curve Loop(4) = {32, 33, -30, 27};
+//+
+Curve Loop(4) = {71, 60, -65, -68};
+//+
 Plane Surface(4) = {4};
-
-Curve Loop(5) = {32, -36, -31, -21};
+//+
+Curve Loop(5) = {70, 68, 69, -67};
+//+
 Plane Surface(5) = {5};
-
-Curve Loop(6) = {50, 54, -49, -39};
+//+
+Curve Loop(6) = {72, 63, -66, -67};
+//+
 Plane Surface(6) = {6};
-
-Curve Loop(7) = {47, 53, -50, -45};
+//+
+Curve Loop(7) = {31, -35, -29, 24};
+//+
 Plane Surface(7) = {7};
-
-Curve Loop(8) = {52, 53, 54, 51};
+//+
+Curve Loop(8) = {36, 33, 34, 35};
+//+
 Plane Surface(8) = {8};
-
-Curve Loop(9) = {48, -42, 49, 51};
+//+
+Curve Loop(9) = {32, 33, -30, 27};
+//+
 Plane Surface(9) = {9};
-
-Curve Loop(10) = {47, -52, 48, -38};
+//+
+Curve Loop(10) = {77, -19, 74, 37, 75, 1, 76, -55};
+//+
 Plane Surface(10) = {10};
-
-Curve Loop(11) = {13, 17, -14, -3};
+//+
+Curve Loop(11) = {81, -58, 78, -4, 79, -40, 80, 22};
+//+
 Plane Surface(11) = {11};
-
-Curve Loop(12) = {16, 17, 15, -18};
-Plane Surface(12) = {12};
-
-Curve Loop(13) = {12, 16, -13, 10};
-Plane Surface(13) = {13};
-
-Curve Loop(14) = {14, 15, -11, 7};
-Plane Surface(14) = {14};
-
-Curve Loop(15) = {11, -18, -12, 2};
-Plane Surface(15) = {15};
-
-Curve Loop(16) = {65, -56, -66, -69};
-Plane Surface(16) = {16};
-
-Curve Loop(17) = {68, 69, -67, 70};
-Plane Surface(17) = {17};
-
-Curve Loop(18) = {67, 66, -63, -72};
-Plane Surface(18) = {18};
-
-Curve Loop(19) = {57, -72, 70, 71};
-Plane Surface(19) = {19};
-
-Curve Loop(20) = {65, -60, -71, 68};
-Plane Surface(20) = {20};
-
-Curve Loop(21) = {78, -4, 79, -40, 80, 22, 81, -58};
-Plane Surface(21) = {21};
-
-Curve Loop(22) = {77, -19, 74, 37, 75, 1, 76, -55};
-Plane Surface(22) = {22};
-
-Curve Loop(23) = {57, 63, 56, -60};
-Surface(23) = {23};
-
-Curve Loop(25) = {95, -56, -94, 55};
-Surface(24) = {25};
-
-Curve Loop(27) = {58, -85, -57, 84};
-Surface(25) = {27};
-
-Curve Loop(29) = {78, -83, -7, -96, 76, 95, -60, 84};
-Surface(26) = {29};
-
-Curve Loop(31) = {96, -2, -97, 1};
-Surface(27) = {31};
-
-Curve Loop(33) = {83, -4, -82, 3};
-Surface(28) = {33};
-
-Curve Loop(35) = {79, 89, 42, 90, 75, 97, -10, 82};
-Surface(29) = {35};
-
-Curve Loop(37) = {90, -37, -91, 38};
-Surface(30) = {37};
-
-Curve Loop(39) = {89, -39, -88, 40};
-Surface(31) = {39};
-
-Curve Loop(41) = {80, -87, -27, -92, 74, -91, 45, -88};
-Surface(32) = {41};
-
-Curve Loop(43) = {92, 20, 93, -19};
-Surface(33) = {43};
-
-Curve Loop(45) = {22, -86, -21, 87};
-Surface(34) = {45};
-
-Curve Loop(47) = {42, -38, 45, 39};
-Surface(35) = {47};
-
-Curve Loop(49) = {27, 21, -24, -20};
-Surface(36) = {49};
-
-Curve Loop(51) = {86, 81, -85, 63, -94, 77, -93, 24};
-Surface(37) = {51};
-
-Curve Loop(53) = {3, -7, -2, -10};
-Surface(38) = {53};
-
-Surface Loop(1) = {3, 4, 5, 1, 2, 36};
-Volume(1) = {1};
-
-Surface Loop(2) = {7, 10, 8, 6, 9, 35};
-Volume(2) = {2};
-
-Surface Loop(3) = {15, 14, 11, 13, 12, 38};
-Volume(3) = {3};
-
-Surface Loop(4) = {19, 18, 17, 20, 16, 23};
-Volume(4) = {4};
-
-Surface Loop(5) = {26, 21, 28, 29, 31, 32, 34, 37, 33, 22, 30, 27, 24, 25, 23, 38, 35, 36};
-Volume(5) = {5};
-
-Physical Volume("Left blade", 98) = {2};
-Physical Volume("Top blade", 99) = {3};
-Physical Volume("Right blade", 100) = {4};
-Physical Volume("Bottom blade", 101) = {1};
-Physical Volume("Center", 102) = {5};
+//+
+Curve Loop(12) = {20, 24, -21, -27};
+//+
+Surface(12) = {12};
+//+
+Curve Loop(14) = {63, 56, -60, 57};
+//+
+Surface(13) = {14};
+//+
+Curve Loop(16) = {45, 39, 42, -38};
+//+
+Surface(14) = {16};
+//+
+Curve Loop(18) = {91, 37, -90, -38};
+//+
+Surface(15) = {18};
+//+
+Curve Loop(20) = {39, -89, -40, 88};
+//+
+Surface(16) = {20};
+//+
+Curve Loop(22) = {74, -91, 45, -88, 80, -87, -27, -92};
+//+
+Surface(17) = {22};
+//+
+Curve Loop(24) = {20, 93, -19, 92};
+//+
+Surface(18) = {24};
+//+
+Curve Loop(26) = {87, 22, -86, -21};
+//+
+Surface(19) = {26};
+//+
+Curve Loop(28) = {86, 81, -85, 63, -94, 77, -93, 24};
+//+
+Surface(20) = {28};
+//+
+Curve Loop(30) = {55, 95, -56, -94};
+//+
+Surface(21) = {30};
+//+
+Curve Loop(32) = {85, -58, -84, 57};
+//+
+Surface(22) = {32};
+//+
+Line(98) = {9, 53};
+//+
+Line(99) = {53, 13};
+//+
+Line(100) = {11, 55};
+//+
+Line(101) = {55, 15};
+//+
+Line(102) = {10, 54};
+//+
+Line(103) = {54, 14};
+//+
+Line(104) = {56, 16};
+//+
+Line(105) = {12, 56};
+//+
+Line(106) = {54, 53};
+//+
+Line(107) = {56, 55};
+//+
+Curve Loop(34) = {106, -98, -7, 102};
+//+
+Plane Surface(23) = {34};
+//+
+Curve Loop(35) = {98, 99, -17, -101, -100, 3};
+//+
+Curve Loop(36) = {105, 107, -100, 10};
+//+
+Plane Surface(24) = {36};
+//+
+Curve Loop(37) = {104, 16, -101, -107};
+//+
+Plane Surface(25) = {37};
+//+
+Curve Loop(38) = {103, -15, -99, -106};
+//+
+Plane Surface(26) = {38};
+//+
+Curve Loop(39) = {18, -15, -17, -16};
+//+
+Plane Surface(27) = {39};
+//+
+Curve Loop(40) = {76, 95, -60, 84, 78, -83, -7, -96};
+//+
+Surface(28) = {40};
+//+
+Curve Loop(42) = {3, 83, -4, -82};
+//+
+Surface(29) = {42};
+//+
+Curve Loop(44) = {96, -2, -97, 1};
+//+
+Surface(30) = {44};
+//+
+Curve Loop(46) = {75, 97, -10, 82, 79, 89, 42, 90};
+//+
+Surface(31) = {46};
+//+
+Curve Loop(48) = {98, 99, -17, -101, -100, 3};
+//+
+Surface(32) = {48};
+//+
+Curve Loop(50) = {2, 102, 103, -18, -104, -105};
+//+
+Surface(33) = {50};
+//+
+Surface Loop(1) = {24, 33, 25, 27, 26, 32, 29, 31, 10, 20, 18, 12, 19, 17, 15, 14, 16, 11, 22, 28, 21, 13, 23, 30};
+//+
+Curve Loop(52) = {3, -7, -2, -10};
+//+
+Surface(34) = {52};
+//+
+Surface Loop(2) = {32, 24, 33, 25, 27, 26, 23, 34};
+//+
+Volume(1) = {2};
+//+
+Surface Loop(3) = {31, 10, 20, 18, 12, 19, 17, 15, 14, 16, 11, 22, 28, 21, 13, 29, 30, 34};
+//+
+Volume(2) = {3};
+//+
+Curve Loop(54) = {48, -38, 47, -52};
+//+
+Surface(35) = {54};
+//+
+Curve Loop(56) = {49, -54, -50, 39};
+//+
+Surface(36) = {56};
+//+
+Curve Loop(58) = {65, -56, -66, -69};
+//+
+Surface(37) = {58};
+//+
+Curve Loop(60) = {71, 57, -72, 70};
+//+
+Surface(38) = {60};
+//+
+Curve Loop(62) = {29, -34, -30, 20};
+//+
+Surface(39) = {62};
+//+
+Curve Loop(64) = {31, 36, -32, 21};
+//+
+Surface(40) = {64};
+//+
+Surface Loop(4) = {1, 36, 2, 35, 3, 14};
+//+
+Volume(3) = {4};
+//+
+Surface Loop(5) = {4, 38, 6, 37, 5, 13};
+//+
+Volume(4) = {5};
+//+
+Surface Loop(6) = {40, 7, 8, 9, 39, 12};
+//+
+Volume(5) = {6};
+//+
+Physical Volume("Left blade", 108) = {3};
+//+
+Physical Volume("Top blade", 109) = {1};
+//+
+Physical Volume("Right blade", 110) = {4};
+//+
+Physical Volume("Bottom blade", 111) = {5};
+//+
+Physical Volume("Heart", 112) = {2};

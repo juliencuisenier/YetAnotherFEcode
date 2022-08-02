@@ -1,24 +1,24 @@
-function [M_hcb,K_hcb,T_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,freq)
+function [M_cb,K_cb,T_cb,L_cb] = CraigBamptonReduction(PrimalSub,freq)
 %GREGBAMPTONREDUCTION Summary of this function goes here
 %   Detailed explanation goes here
 
 nSubs = PrimalSub.nSubs;
 
-T_hcb = cell(1,nSubs);
+T_cb = cell(1,nSubs);
 
-Us_hcb = cell(1,nSubs);
-L_hcb = cell(1,nSubs);
+Us_cb = cell(1,nSubs);
+L_cb = cell(1,nSubs);
 
 Mcs_rearranged = cell(1,nSubs);
 Kcs_rearranged = cell(1,nSubs);
 
 ms = zeros(1,nSubs);
 
-nInternalDOFglobal_hcb = 0;
+nInternalDOFglobal_cb = 0;
 
 nDOFPerNode = PrimalSub.Substructures(1).Mesh.nDOFPerNode;
 
-%First loop to determine the T_hcb matrix
+%First loop to determine the T_cb matrix
 for iSub=1:nSubs
     
     Us_internal = PrimalSub.InternalFreeDOF{iSub};
@@ -39,29 +39,29 @@ for iSub=1:nSubs
     
     [V0_i,om] = eigs(Ks_ii, Ms_ii, 100, 'SM'); 
     f = sqrt(diag(om))/2/pi;
-    f = nonzeros(f < freq);
+    f = nonzeros(f < 2*freq);
     [m,~] = size(f);
     [~,ind] = sort(f);
     V0_i = V0_i(:,ind);
     
     IVM = [V0_i;zeros(nInts,m)];
     
-    T_hcb{iSub} = [IVM CM]; 
+    T_cb{iSub} = [IVM CM]; 
     Mcs_rearranged{iSub} = [Ms_ii Ms(Us_internal,Us_interface); Ms(Us_interface,Us_internal) Ms(Us_interface,Us_interface)];
     Kcs_rearranged{iSub} = [Ks_ii Ks_ib; Ks(Us_interface,Us_internal) Ks(Us_interface,Us_interface)];
     ms(iSub) = m;
     
-    Us_hcb{iSub} = zeros(m+nInts,1);
+    Us_cb{iSub} = zeros(m+nInts,1);
     
-    nInternalDOFglobal_hcb = nInternalDOFglobal_hcb + m;
+    nInternalDOFglobal_cb = nInternalDOFglobal_cb + m;
 end
 
-nDOFglobal_hcb = nInternalDOFglobal_hcb + PrimalSub.nInt*nDOFPerNode;
+nDOFglobal_cb = nInternalDOFglobal_cb + PrimalSub.nInt*nDOFPerNode;
 
-U = 1:nDOFglobal_hcb';
+U = 1:nDOFglobal_cb';
 
 
-InterfaceDOFdone = nInternalDOFglobal_hcb;
+InterfaceDOFdone = nInternalDOFglobal_cb;
 InternalDOFdone = 0;
 IntsDOFdone = zeros(1,nSubs);
 
@@ -72,7 +72,7 @@ Interfaces = PrimalSub.Interfaces;
 for iSub=1:nSubs
 
     m = ms(iSub);
-    Us_hcb{iSub}(1:m) = U(InternalDOFdone+1:InternalDOFdone+m);
+    Us_cb{iSub}(1:m) = U(InternalDOFdone+1:InternalDOFdone+m);
     
     InternalDOFdone = InternalDOFdone + m;
     
@@ -82,8 +82,8 @@ for iSub=1:nSubs
         ind = find(Interfaces_loc(:,jSub));
         if ~isempty(ind)
             nInts_loc = length(ind)*nDOFPerNode;
-            Us_hcb{iSub}(m+IntsDOFdone(iSub)+1:m+IntsDOFdone(iSub)+nInts_loc) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts_loc);
-            Us_hcb{jSub}(ms(jSub)+IntsDOFdone(jSub)+1:ms(jSub)+IntsDOFdone(jSub)+nInts_loc) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts_loc);
+            Us_cb{iSub}(m+IntsDOFdone(iSub)+1:m+IntsDOFdone(iSub)+nInts_loc) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts_loc);
+            Us_cb{jSub}(ms(jSub)+IntsDOFdone(jSub)+1:ms(jSub)+IntsDOFdone(jSub)+nInts_loc) = U(InterfaceDOFdone+1:InterfaceDOFdone+nInts_loc);
             InterfaceDOFdone = InterfaceDOFdone + nInts_loc;
             IntsDOFdone(iSub) = IntsDOFdone(iSub) + nInts_loc;
             IntsDOFdone(jSub) = IntsDOFdone(jSub) + nInts_loc;
@@ -94,18 +94,18 @@ for iSub=1:nSubs
     
 end
 
-%Loop to build L_hcb
+%Loop to build L_cb
 
 for iSub=1:nSubs  
-    us = Us_hcb{iSub}; %DOF vector of substructure i
+    us = Us_cb{iSub}; %DOF vector of substructure i
     n_s = length(us);
     
-    Ls = sparse(1:n_s, us, true(n_s,1), n_s, nDOFglobal_hcb );
-    L_hcb{iSub} = Ls;
+    Ls = sparse(1:n_s, us, true(n_s,1), n_s, nDOFglobal_cb );
+    L_cb{iSub} = Ls;
 end
 
-M_hcb = [];
-K_hcb = [];
+M_cb = [];
+K_cb = [];
 
 for iSub=1:nSubs
       
@@ -113,20 +113,18 @@ for iSub=1:nSubs
     Mcs = Mcs_rearranged{iSub};
     
     
-    Ms_hcb = T_hcb{iSub}'*Mcs*T_hcb{iSub};
+    Ms_cb = T_cb{iSub}'*Mcs*T_cb{iSub};
     
-    Ks_hcb = T_hcb{iSub}'*Kcs*T_hcb{iSub};
+    Ks_cb = T_cb{iSub}'*Kcs*T_cb{iSub};
     
-    if isempty(M_hcb)
-        M_hcb = L_hcb{iSub}'*Ms_hcb*L_hcb{iSub};
-        K_hcb = L_hcb{iSub}'*Ks_hcb*L_hcb{iSub};
+    if isempty(M_cb)
+        M_cb = L_cb{iSub}'*Ms_cb*L_cb{iSub};
+        K_cb = L_cb{iSub}'*Ks_cb*L_cb{iSub};
     else
-        M_hcb = M_hcb + L_hcb{iSub}'*Ms_hcb*L_hcb{iSub};
-        K_hcb = K_hcb + L_hcb{iSub}'*Ks_hcb*L_hcb{iSub};
+        M_cb = M_cb + L_cb{iSub}'*Ms_cb*L_cb{iSub};
+        K_cb = K_cb + L_cb{iSub}'*Ks_cb*L_cb{iSub};
     end
         
-end
-
 end
 
 

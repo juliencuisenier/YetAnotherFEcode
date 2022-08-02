@@ -83,6 +83,14 @@ classdef Assembly < handle
         function [Kd] = stiffness_derivative(self, varargin)
             Kd = self.matrix('stiffness_derivative',varargin{:});
         end
+        
+        function [G] = coriolis_matrix(self,varargin)
+           G = self.matrix('coriolis_matrix',varargin{:});
+        end
+        
+        function [Ksp] = spin_softening_matrix(self,varargin)
+           Ksp =  self.matrix('spin_softening_matrix',varargin{:});
+        end
 
         function [K] = matrix(self,elementMethodName,varargin)
             % This function assembles a generic finite element matrix from

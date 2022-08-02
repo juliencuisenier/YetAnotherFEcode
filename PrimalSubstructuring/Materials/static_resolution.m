@@ -1,15 +1,13 @@
-function u = static_resolution(PrimalSub,Fext)
+function u = static_resolution(PrimalSub,F)
 %STATIC_RESOLUTION 
 %Solve a static problem. Fext is a (1,nSubs) cell
 
-fg = zeros(PrimalSub.nDOFglobal,1);
-
-for iSub=1:PrimalSub.nSubs
-    fg = fg + PrimalSub.L{iSub}'*Fext{iSub};
+if iscell(F)
+    F = L_to_global(PrimalSub,F);
 end
 
-fgc = PrimalSub.constrain_vector(fg);
-uc = PrimalSub.DATA.Kc\fgc;
+Fc = PrimalSub.constrain_vector(F);
+uc = PrimalSub.DATA.Kc\Fc;
 u = PrimalSub.unconstrain_vector(uc);
 end
 

@@ -58,26 +58,8 @@ myMesh4.create_elements_table(Submeshes{4,2}, myElementConstructor);
 myMesh5 = Mesh(Submeshes{5,1});
 myMesh5.create_elements_table(Submeshes{5,2}, myElementConstructor);
 
-%At front of the heart
-z_front = find(myMesh5.nodes(:,3)==1);
-x_bc = find(abs(myMesh5.nodes(:,1))<=0.5);
-y_bc = find(abs(myMesh5.nodes(:,2))<=0.5);
-
-indices_front1 = intersect(z_front,x_bc);
-indices_front = intersect(indices_front1,y_bc);
-
-myMesh5.set_essential_boundary_condition(indices_front,1:3,0)
-
-%At behind of the heart
-
-z_behind = find(myMesh5.nodes(:,1)==0);
-
-indices_behind1 = intersect(z_behind,x_bc);
-indices_behind = intersect(indices_behind1,y_bc);
-
-myMesh5.set_essential_boundary_condition(indices_behind,1:3,0)
-
-
+myMesh5.set_essential_boundary_condition(Submeshes{5,3}{3},1:3,0)
+myMesh5.set_essential_boundary_condition(Submeshes{5,3}{6},1:3,0)
 
 % ASSEMBLY ________________________________________________________________
 % ReducedAssembly is a subclass of Assembly. It adds methods for the
@@ -109,25 +91,8 @@ Mesh_ref.create_elements_table(elements_ref, myElementConstructor)
 
 %Boundaries conditions
 
-%At front of the heart
-z_front = find(nodes_ref(:,1)==1);
-x_bc = find(abs(nodes_ref(:,2))<=0.35);
-y_bc = find(abs(nodes_ref(:,3))<=0.35);
-
-indices_front1 = intersect(z_front,x_bc);
-indices_front = intersect(indices_front1,y_bc);
-
-Mesh_ref.set_essential_boundary_condition(indices_front,1:3,0)
-
-%At behind of the heart
-
-z_behind = find(nodes_ref(:,1)==0);
-
-indices_behind1 = intersect(z_behind,x_bc);
-indices_behind = intersect(indices_behind1,y_bc);
-
-Mesh_ref.set_essential_boundary_condition(indices_behind,1:3,0)
-
+Mesh_ref.set_essential_boundary_condition(nset_ref{3},1:3,0)
+Mesh_ref.set_essential_boundary_condition(nset_ref{6},1:3,0)
 
 %Assembly
 
@@ -164,10 +129,10 @@ om_ref = sort(sqrt(diag(om_ref)));
 
 %% Reduction 
 
-[M_hcb,K_hcb,V_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,1000);
+[M_cb,K_cb,V_cb,L_cb] = CraigBamptonReduction(PrimalSub,1000);
 
-[~,om_hcb] = eigs(K_hcb,M_hcb, n_VMs, 'SM');
-om_hcb = sort(diag(sqrt(om_hcb)));
+[~,om_cb] = eigs(K_cb,M_cb, n_VMs, 'SM');
+om_cb = sort(diag(sqrt(om_cb)));
 %% Defining the force________________________________________________________
 
 %With substructuring
@@ -210,13 +175,13 @@ F = L_to_global(PrimalSub,Fs);
 F_ref = zeros(Mesh_ref.nDOFs,1);
 
 DOFs = Mesh_ref.get_DOF_from_location(loc1);
-F_ref(DOFs(2)) = -S; %Force of Sub1
+F_ref(DOFs(2)) = S; %Force of Sub1
 
 DOFs = Mesh_ref.get_DOF_from_location(loc2);
 F_ref(DOFs(1)) = S; %Force of Sub2
 
 DOFs = Mesh_ref.get_DOF_from_location(loc3);
-F_ref(DOFs(2)) = S; %Force of Sub3
+F_ref(DOFs(2)) = -S; %Force of Sub3
 
 DOFs = Mesh_ref.get_DOF_from_location(loc4);
 F_ref(DOFs(1)) = -S; %Force of Sub4
@@ -236,19 +201,19 @@ least_squares_ref = (A_ref'*A_ref)\A_ref'*ksis;
 Assembly_ref.DATA.C = least_squares_ref(1)*Assembly_ref.DATA.M + least_squares_ref(2)*Assembly_ref.DATA.K;
 
 
-A_hcb = [ones(5,1)./om_hcb/2 om_hcb.*ones(5,1)/2];
-least_squares_hcb = (A_hcb'*A_hcb)\A_hcb'*ksis;
-C_hcb = least_squares_hcb(1)*M_hcb + least_squares_hcb(2)*K_hcb;
-[nDOFhcb,~] = size(M_hcb);
+A_cb = [ones(5,1)./om_cb/2 om_cb.*ones(5,1)/2];
+least_squares_cb = (A_cb'*A_cb)\A_cb'*ksis;
+C_cb = least_squares_cb(1)*M_cb + least_squares_cb(2)*K_cb;
+nDOFcb = size(M_cb,1);
 
 
 omega_ext_ref = mean(om_ref(1:2));
 omega_ext = mean(om(1:2));
-omega_ext_hcb = mean(om_hcb(1:2));
+omega_ext_cb = mean(om_cb(1:2));
 
 T = 2*pi/omega_ext;
 T_ref = 2*pi/omega_ext_ref;
-T_hcb = 2*pi/omega_ext_hcb;
+T_cb = 2*pi/omega_ext_cb;
 
 amplification_factor = 2;
 
@@ -257,8 +222,8 @@ F_ext = @(t) amplification_factor * F * sin(omega_ext * t);
 F_ext_ref = @(t) amplification_factor * F_ref * sin(omega_ext_ref * t);
 
 
-F_ext_hcb = applying_force_hcb(PrimalSub,Fs,V_hcb,L_hcb);
-F_ext_hcb = @(t) amplification_factor * F_ext_hcb * sin(omega_ext_hcb * t);
+F_ext_cb = applying_force_cb(PrimalSub,Fs,V_cb,L_cb);
+F_ext_cb = @(t) amplification_factor * F_ext_cb * sin(omega_ext_cb * t);
 
 % Initial condition: equilibrium
 u0 = zeros(PrimalSub.nDOFglobal, 1);
@@ -273,27 +238,27 @@ q0_ref = Assembly_ref.constrain_vector(u0);
 qd0_ref = Assembly_ref.constrain_vector(v0);
 qdd0_ref = Assembly_ref.constrain_vector(a0);
 
-q0_hcb = zeros(nDOFhcb, 1);
-qd0_hcb = zeros(nDOFhcb, 1);
-qdd0_hcb = zeros(nDOFhcb, 1); 
+q0_cb = zeros(nDOFcb, 1);
+qd0_cb = zeros(nDOFcb, 1);
+qdd0_cb = zeros(nDOFcb, 1); 
 
 % time step for integration
 h = T/5;
 
 TI_lin = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
 TI_lin_ref = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
-TI_lin_hcb = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
+TI_lin_cb = ImplicitNewmark('timestep',h,'alpha',0.005,'linear',true);
 
 % Linear Residual evaluation function handle
 residual_lin = @(q,qd,qdd,t)residual_linear(q,qd,qdd,t,PrimalSub,F_ext);
 residual_lin_ref = @(q,qd,qdd,t)residual_linear(q,qd,qdd,t,Assembly_ref,F_ext_ref);
-residual_HCB = @(q,qd,qdd,t)residual_HCB(q,qd,qdd, t, M_hcb,C_hcb, K_hcb, F_ext_hcb);
+residual_cb = @(q,qd,qdd,t)residual_linear_cb(q,qd,qdd, t, M_cb,C_cb, K_cb, F_ext_cb);
 
 % Linearized Time Integration
 tmax = 10*T; 
 TI_lin.Integrate(q0,qd0,qdd0,tmax,residual_lin);
 TI_lin_ref.Integrate(q0_ref,qd0_ref,qdd0_ref,tmax,residual_lin_ref);
-TI_lin_hcb.Integrate(q0_hcb,qd0_hcb,qdd0_hcb,tmax,residual_HCB);
+TI_lin_cb.Integrate(q0_cb,qd0_cb,qdd0_cb,tmax,residual_cb);
 
 % obtain full solution
 TI_lin.Solution.u = PrimalSub.unconstrain_vector(TI_lin.Solution.q);
@@ -301,50 +266,48 @@ TI_lin_ref.Solution.u = Assembly_ref.unconstrain_vector(TI_lin_ref.Solution.q);
 
 [~,s] = size(TI_lin_ref.Solution.u);
 
-u_hcb_wrong = zeros(PrimalSub.nDOFglobal,s);
+u_cb_wrong = zeros(PrimalSub.nDOFglobal,s);
 for i=1:s
-    us_hcb_i = converter_reducted_vector(PrimalSub,V_hcb,L_hcb,TI_lin_hcb.Solution.q(:,i));
-    
-    u_hcb_wrong(:,i) = L_to_global(PrimalSub,us_hcb_i);
+    u_cb_wrong(:,i) = converter_reducted_vector(PrimalSub,V_cb,L_cb,TI_lin_cb.Solution.q(:,i));
 end
 
 %% Differences
 
 
 u = zeros(PrimalSub.nDOFglobal,s);
-u_hcb = zeros(PrimalSub.nDOFglobal,s);
+u_cb = zeros(PrimalSub.nDOFglobal,s);
 corr_gmsh_indices = corr_gmsh_indices(PrimalSub,Mesh_ref);
 
 for i=2:s
     u(:,i) = reindex_vector(corr_gmsh_indices,TI_lin.Solution.u(:,i));
-    u_hcb(:,i) = reindex_vector(corr_gmsh_indices,u_hcb_wrong(:,i));
+    u_cb(:,i) = reindex_vector(corr_gmsh_indices,u_cb_wrong(:,i));
 end
 
 u_norm = zeros(PrimalSub.nDOFglobal,s);
 u_norm_ref = zeros(PrimalSub.nDOFglobal,s);
-u_norm_hcb = zeros(PrimalSub.nDOFglobal,s);
+u_norm_cb = zeros(PrimalSub.nDOFglobal,s);
 
 angles = zeros(s,1);
-angles_hcb = zeros(s,1);
+angles_cb = zeros(s,1);
 
 for i=2:s
     u_norm(:,i) = u(:,i)/norm(u(:,i));
     u_norm_ref(:,i) = TI_lin_ref.Solution.u(:,i)/norm(TI_lin_ref.Solution.u(:,i));
-    u_norm_hcb(:,i) = u_hcb(:,i)/norm(u_hcb(:,i));
+    u_norm_cb(:,i) = u_cb(:,i)/norm(u_cb(:,i));
     
     angles(i) = acos(u_norm(:,i)'*u_norm_ref(:,i)*0.999999)*180/pi;
-    angles_hcb(i) = acos(u_norm_hcb(:,i)'*u_norm_ref(:,i))*180/pi;
+    angles_cb(i) = acos(u_norm_cb(:,i)'*u_norm_ref(:,i))*180/pi;
 end
 
 mean_angle = mean(angles);
-mean_angle_hcb = mean(angles_hcb);
+mean_angle_cb = mean(angles_cb);
 
 %% Plot
 t = TI_lin.Solution.time;
-dof = 221; %taking a random dof 
+dof = 223; %taking a random dof 
 figure
 plot(t,TI_lin_ref.Solution.u(dof,:),'k.-')
 hold on
 plot(t,u(dof,:),'b-')
-plot(t,u_hcb(dof,:),'r--')
+plot(t,u_cb(dof,:),'r--')
 legend('Reference model','Substructuring','Reduced model')

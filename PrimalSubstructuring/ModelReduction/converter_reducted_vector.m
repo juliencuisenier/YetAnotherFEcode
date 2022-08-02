@@ -1,4 +1,4 @@
-function [Vs_corr] = converter_reducted_vector(PrimalSub,T_hcb,L_hcb,V_hcb)
+function [V_corr] = converter_reducted_vector(PrimalSub,T_hcb,L_hcb,V_hcb)
 %CORR_REDUCTIONINDICES Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -19,20 +19,18 @@ for iSub=1:nSubs
     
     nDOFinterface = length(InterfaceUs);
     nDOFinternalFree = length(InternalUs);
-    
-    
+   
     Vs_corr{iSub} = zeros(length(Us),1);
-    
-    
+ 
     for i=1:nDOFinternalFree
         Vs_corr{iSub}(InternalUs(i)) = Vs{iSub}(i);
     end
-    
     for i=1:nDOFinterface
         Vs_corr{iSub}(InterfaceUs(i)) = Vs{iSub}(i+nDOFinternalFree);
-    end
-    
+    end  
 end
+
+V_corr = L_to_global(PrimalSub,Vs_corr);
 
 end
 

@@ -59,22 +59,8 @@ myMesh4.create_elements_table(Submeshes{4,2}, myElementConstructor);
 myMesh5 = Mesh(Submeshes{5,1});
 myMesh5.create_elements_table(Submeshes{5,2}, myElementConstructor);
 
-z_front = find(Submeshes{5,1}(:,3)==1);
-x_bc = find(abs(Submeshes{5,1}(:,1))<=0.5);
-y_bc = find(abs(Submeshes{5,1}(:,2))<=0.5);
-
-indices_front1 = intersect(z_front,x_bc);
-indices_front = intersect(indices_front1,y_bc);
-
-
-z_behind = find(Submeshes{5,1}(:,3)==0);
-
-indices_behind1 = intersect(z_behind,x_bc);
-indices_behind = intersect(indices_behind1,y_bc);
-
-myMesh5.set_essential_boundary_condition(indices_front,1:3,0)
-myMesh5.set_essential_boundary_condition(indices_behind,1:3,0)
-
+myMesh5.set_essential_boundary_condition(Submeshes{5,3}{3},1:3,0)
+myMesh5.set_essential_boundary_condition(Submeshes{5,3}{6},1:3,0)
 
 
 % ASSEMBLY ________________________________________________________________
@@ -192,29 +178,27 @@ colormap jet
 title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_ref(mod),3) ...
     ' Hz with global model'])
 
-%% HCB reduction method
+%% CB reduction method
 
-[M_hcb,K_hcb,T_hcb,L_hcb] = CraigBamptonReduction(PrimalSub,200);
+[M_cb,K_cb,T_cb,L_cb] = CraigBamptonReduction(PrimalSub,200);
 
-[V0s_hcb,om_hcb] = eigs(K_hcb,M_hcb, n_VMs, 'SM');
-[f0_hcb,ind] = sort(sqrt(diag(om_hcb))/2/pi);
-V0s_hcb = V0s_hcb(:,ind);
+[V0s_cb,om_cb] = eigs(K_cb,M_cb, n_VMs, 'SM');
+[f0_cb,ind] = sort(sqrt(diag(om_cb))/2/pi);
+V0s_cb = V0s_cb(:,ind);
 
-V0s_hcb_corr = converter_reducted_vector(PrimalSub,T_hcb,L_hcb,V0s_hcb(:,2));
+V0_cb = converter_reducted_vector(PrimalSub,T_cb,L_cb,V0s_cb(:,2));
 
-
-V0_hcb = L_to_global(PrimalSub,V0s_hcb_corr);
 
 corr_gmsh_indices = corr_gmsh_indices(PrimalSub,Mesh_ref);
-V0_hcb = reindex_vector(corr_gmsh_indices,V0_hcb);
+V0_cb = reindex_vector(corr_gmsh_indices,V0_cb);
 
 figure
 hold on
-nodalDef_hcb = reshape(V0_hcb,3,[]).';
-PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_hcb, 'factor', 1)
+nodalDef_cb = reshape(V0_cb,3,[]).';
+PlotFieldonDeformedMesh(nodes_ref, elements_ref, nodalDef_cb, 'factor', 1)
 colormap jet
-title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_hcb(mod),3) ...
-    ' Hz with HCB reduction'])
+title(['\Phi_' num2str(mod) ' - Frequency = ' num2str(f0_cb(mod),3) ...
+    ' Hz with CB reduction'])
 
 %% FRFs
 
@@ -243,7 +227,7 @@ Fc_ref = Assembly_ref.constrain_vector(F_ref);
 
 om = sort(sqrt(diag(om)));
 om_ref = sort(sqrt(diag(om_ref)));
-om_hcb = sort(sqrt(diag(om_hcb)));
+om_cb = sort(sqrt(diag(om_cb)));
 
 ksis = 0.1*ones(5,1);
 A = [ones(5,1)./om/2 om.*ones(5,1)/2];
@@ -256,12 +240,13 @@ least_squares_ref = (A_ref'*A_ref)\A_ref'*ksis;
 C_ref = least_squares(1)*M_ref + least_squares(2)*K_ref;
 Cc_ref = Assembly_ref.constrain_matrix(C_ref);
 
-A_hcb = [ones(5,1)./om_hcb/2 om_hcb.*ones(5,1)/2];
-least_squares_hcb = (A_hcb'*A_hcb)\A_hcb'*ksis;
-C_hcb = least_squares_hcb(1)*M_hcb + least_squares_hcb(2)*K_hcb;
+A_cb = [ones(5,1)./om_cb/2 om_cb.*ones(5,1)/2];
+least_squares_cb = (A_cb'*A_cb)\A_cb'*ksis;
+C_cb = least_squares_cb(1)*M_cb + least_squares_cb(2)*K_cb;
 
 fn = 100;
 fmax = 200;
+fmin = 0;
 
 
 loc = [-2.5 0.15 0.5];
@@ -271,7 +256,7 @@ DOFs_ref = Assembly_ref.Mesh.get_DOF_from_location(loc);
 DOFs_ref = DOFs_ref(2);
 
 
-[FRF] = frf_substructuring(PrimalSub,Fs,DOFs_s,fmax,fn);
+[FRF] = frf_substructuring(PrimalSub,Fs,DOFs_s,fmin,fmax,fn);
 
 
 %Calculating the FRF og the global model
@@ -298,30 +283,28 @@ for xi=DOFs_ref
    xlabel('Frequency');
 end
 
-[FRF_hcb] = frf_hcb(PrimalSub,M_hcb,C_hcb,K_hcb,T_hcb,L_hcb,Fs,DOFs_s,fmax,fn);
-
-
+[FRF_cb] = frf_cb(PrimalSub,M_cb,C_cb,K_cb,T_cb,L_cb,Fs,DOFs_s,fmin,fmax,fn);
 
 %% Differences
 
-diff_freq = abs(f0_ref-f0_hcb)./f0_ref;
+diff_freq = abs(f0_ref-f0_cb)./f0_ref;
 
 normV0_ref = V0_ref(:,2)/norm(V0_ref(:,2));
 
-normV0_hcb = V0_hcb/norm(V0_hcb);
+normV0_cb = V0_cb/norm(V0_cb);
 
-hcb_angle = acos(normV0_hcb'*normV0_ref)*180/pi;
+cb_angle = acos(normV0_cb'*normV0_ref)*180/pi;
 
 FRF_dof = abs(FRF(DOFs_s,:));
 FRF_dof_ref = abs(FRF_ref(DOFs_ref,:));
-FRF_dof_hcb = abs(FRF_hcb(DOFs_s,:));
+FRF_dof_cb = abs(FRF_cb(DOFs_s,:));
 
 normFRF = FRF_dof/norm(FRF_dof);
 normFRF_ref = FRF_dof_ref/norm(FRF_dof_ref);
-normFRF_hcb = FRF_dof_hcb/norm(FRF_dof_hcb);
+normFRF_cb = FRF_dof_cb/norm(FRF_dof_cb);
 
 FRF_sub_angle = acos(normFRF*normFRF_ref')*180/pi;
-FRF_hcb_angle = acos(normFRF_hcb*normFRF_ref')*180/pi;
+FRF_cb_angle = acos(normFRF_cb*normFRF_ref')*180/pi;
 
 
 

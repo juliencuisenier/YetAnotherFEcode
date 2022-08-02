@@ -7,7 +7,7 @@ Mesh.SubdivisionAlgorithm = 2;
 // definition du pas du maillage
 h = 0.2;
 
-// definition des points (en 3D, raison pour laquelle il y a un 0 en z)
+// definition des points 
 Point(1) = {0, 0, 0, h};
 Point(2) = {0.2, 0, 0, h};
 Point(3) = {0, 1, 0, h};

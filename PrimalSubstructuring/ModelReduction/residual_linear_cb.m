@@ -1,4 +1,4 @@
-function [ r, drdqdd, drdqd, drdq] = residual_HCB( q, qd, qdd, t, M_hcb,C_hcb, K_hcb,Fext)
+function [ r, drdqdd, drdqd, drdq] = residual_cb( q, qd, qdd, t, M_cb,C_cb, K_cb,Fext)
 %  RESIDUAL_REDUCED_LINEAR In the following function, we construct the residual needed for time integration 
 % of second-order reduced system
 % 
@@ -45,9 +45,9 @@ function [ r, drdqdd, drdqd, drdq] = residual_HCB( q, qd, qdd, t, M_hcb,C_hcb, K
 % of the $\texttt{Assembly}$ object to avoid unnecessary assembly during each 
 % time-step. Note that this function may be modified appropriately to allow for 
 % adaptive selection. i.e., when the basis changes online during time integration.
-M_V = M_hcb;
-C_V = C_hcb;
-K_V = K_hcb;
+M_V = M_cb;
+C_V = C_cb;
+K_V = K_cb;
 F_V = Fext(t);
 %% 
 % Residual is computed according to the formula above:

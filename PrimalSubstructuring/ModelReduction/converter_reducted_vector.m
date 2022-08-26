@@ -1,4 +1,4 @@
-function [V_corr] = converter_reducted_vector(PrimalSub,T_hcb,L_hcb,V_hcb)
+function [V_corr] = converter_reducted_vector(PrimalSub,T_cb,L_cb,V_cb)
 %CORR_REDUCTIONINDICES Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,8 +7,8 @@ Vs = cell(1,nSubs);
 Vs_corr = cell(1,nSubs);
 
 for iSub=1:nSubs
-    Vs_hcb = L_hcb{iSub}*V_hcb;
-    Vs{iSub} = T_hcb{iSub}*Vs_hcb;
+    Vs_hcb = L_cb{iSub}*V_cb;
+    Vs{iSub} = T_cb{iSub}*Vs_hcb;
 end
 
 for iSub=1:nSubs

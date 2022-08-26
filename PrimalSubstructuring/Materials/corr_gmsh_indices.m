@@ -1,4 +1,4 @@
-function corr_gmsh_indices = corr_gmsh_indices(PrimalSub,GlobalMesh)
+function indices_corrector = corr_gmsh_indices(PrimalSub,GlobalMesh)
 % corr_gmsh_indices makes a vector that make correspondance the index of the
 % substructuring method and the index of the gmsh method.
 % Let i an index of a global vector of the substructuring class, and make
@@ -15,13 +15,13 @@ function corr_gmsh_indices = corr_gmsh_indices(PrimalSub,GlobalMesh)
 
 
 us = PrimalSub.Us;
-corr_gmsh_indices = zeros(PrimalSub.nDOFglobal,1);
+indices_corrector = zeros(PrimalSub.nDOFglobal,1);
 
 for iSub=1:PrimalSub.nSubs
     for j=1:PrimalSub.Substructures(iSub).Mesh.nNodes       
         gmsh_index = PrimalSub.globalIndices{iSub}(j);
         gmsh_dofs = GlobalMesh.get_DOF_from_nodeIDs(gmsh_index);
-        corr_gmsh_indices(gmsh_dofs) = us{iSub}(3*(j-1)+1:3*(j-1)+3);
+        indices_corrector(gmsh_dofs) = us{iSub}(3*(j-1)+1:3*(j-1)+3);
     end
 end
 

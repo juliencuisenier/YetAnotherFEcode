@@ -1,4 +1,4 @@
-function [M_cb,K_cb,T_cb,L_cb] = CraigBamptonReduction(PrimalSub,freq)
+function [M_cb,C_cb,K_cb,T_cb,L_cb] = CraigBamptonReduction(PrimalSub,Omega,freq)
 %GREGBAMPTONREDUCTION Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,6 +11,7 @@ L_cb = cell(1,nSubs);
 
 Mcs_rearranged = cell(1,nSubs);
 Kcs_rearranged = cell(1,nSubs);
+Gcs_rearranged = cell(1,nSubs);
 
 ms = zeros(1,nSubs);
 
@@ -25,9 +26,25 @@ for iSub=1:nSubs
     Us_interface = PrimalSub.InterfaceDOF{iSub};
 
     nInts = length(Us_interface);
+    
+%% Coriolis matrix
+
+% These matrices will be used later, if Omega isn't empty
+
+
 %% Component modes
     u0 = zeros(length(PrimalSub.Us{iSub}),1);
     [Ks,~] = PrimalSub.Substructures(iSub).tangent_stiffness_and_force(u0);
+    
+    % Spinning force matrices, if the structure is rotated
+    if ~isempty(Omega)
+        Gs = PrimalSub.Substructures(iSub).coriolis_matrix(Omega);
+        Gcs_rearranged{iSub} = [Gs(Us_internal,Us_internal) Gs(Us_internal,Us_interface);...
+            Gs(Us_interface,Us_internal) Gs(Us_interface,Us_interface)];
+        
+        Ks = Ks + PrimalSub.Substructures(iSub).spin_softening_matrix(Omega);        
+    end
+    
     Ks_ib = Ks(Us_internal,Us_interface);
     Ks_ii = Ks(Us_internal,Us_internal);
     CM = [-Ks_ii\Ks_ib;eye(nInts)];
@@ -111,17 +128,20 @@ for iSub=1:nSubs
       
     Kcs = Kcs_rearranged{iSub};
     Mcs = Mcs_rearranged{iSub};
+    Gcs = Gcs_rearranged{iSub};
     
     
     Ms_cb = T_cb{iSub}'*Mcs*T_cb{iSub};
-    
+    Gs_cb = T_cb{iSub}'*Gcs*T_cb{iSub};
     Ks_cb = T_cb{iSub}'*Kcs*T_cb{iSub};
     
     if isempty(M_cb)
         M_cb = L_cb{iSub}'*Ms_cb*L_cb{iSub};
+        C_cb = L_cb{iSub}'*Gs_cb*L_cb{iSub};
         K_cb = L_cb{iSub}'*Ks_cb*L_cb{iSub};
     else
         M_cb = M_cb + L_cb{iSub}'*Ms_cb*L_cb{iSub};
+        C_cb = C_cb + L_cb{iSub}'*Gs_cb*L_cb{iSub};
         K_cb = K_cb + L_cb{iSub}'*Ks_cb*L_cb{iSub};
     end
         
